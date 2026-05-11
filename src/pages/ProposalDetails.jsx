@@ -1,0 +1,94 @@
+import { useEffect, useState } from 'react'
+import { getAllProposals, getProposal } from '../services/genlayerService'
+
+export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
+  const [proposal, setProposal] = useState(null)
+  const [proposals, setProposals] = useState([])
+
+  useEffect(() => {
+    async function loadProposalDetails() {
+      const [serviceProposal, serviceProposals] = await Promise.all([
+        getProposal(proposalId),
+        getAllProposals(),
+      ])
+
+      setProposal(serviceProposal.error ? null : serviceProposal)
+      setProposals(serviceProposals)
+    }
+
+    loadProposalDetails()
+  }, [proposalId])
+
+  if (!proposal) {
+    return (
+      <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-7 backdrop-blur-xl">
+        <h1 className="text-3xl font-semibold text-white md:text-4xl">Proposal Details</h1>
+        <p className="mt-4 text-sm text-slate-300">Loading mock proposal details...</p>
+      </section>
+    )
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-7 backdrop-blur-xl">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-semibold uppercase text-cyan-300">
+            Proposal #{proposal.id}
+          </p>
+          <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-200">
+            {proposal.status}
+          </span>
+        </div>
+        <h1 className="mt-4 text-3xl font-semibold text-white md:text-4xl">Proposal Details</h1>
+        <h2 className="mt-3 text-2xl font-semibold text-slate-100">{proposal.title}</h2>
+        <p className="mt-3 break-words text-sm text-slate-400">Submitted by {proposal.creator}</p>
+        <p className="mt-6 text-base leading-7 text-slate-300">{proposal.proposal_text}</p>
+        <div className="mt-6 rounded-xl border border-cyan-300/20 bg-cyan-300/[0.06] p-5">
+          <h2 className="text-base font-semibold text-white">AI Summary</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-300">
+            {proposal.analysis?.summary ?? 'This proposal has not been analyzed yet.'}
+          </p>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <Metric label="Recommendation" value={proposal.analysis?.recommendation ?? 'PENDING'} />
+          <Metric label="Confidence" value={`${proposal.analysis?.confidence ?? 0}%`} />
+          <Metric label="Risk score" value={`${proposal.analysis?.risk_score ?? 0}%`} />
+        </div>
+      </section>
+
+      <aside className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-300/[0.06] p-5 backdrop-blur-xl">
+        <h2 className="text-lg font-semibold text-white">Proposal Switcher</h2>
+        <div className="mt-4 grid gap-3">
+          {proposals.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                onSelectProposal(item.id)
+                onNavigate('details', item.id)
+              }}
+              className={`rounded-xl border p-3 text-left text-sm transition ${
+                item.id === proposal.id
+                  ? 'border-cyan-300/60 bg-cyan-300/10 text-cyan-100'
+                  : 'border-white/10 bg-black/20 text-slate-300 hover:border-fuchsia-300/50'
+              }`}
+            >
+              <span className="block text-xs text-slate-400">Proposal #{item.id}</span>
+              {item.title}
+            </button>
+          ))}
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+function Metric({ label, value }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+      <p className="text-xs text-slate-400">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
+    </div>
+  )
+}
