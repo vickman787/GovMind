@@ -3,7 +3,7 @@ import { genlayerConfig } from '../config/genlayerConfig'
 import { analyzeProposal, submitProposal } from '../services/genlayerService'
 
 const inputStyle =
-  'w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-300/70 focus:ring-2 focus:ring-cyan-300/20'
+  'w-full rounded-xl border border-cyan-300/10 bg-slate-950/55 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-300/70 focus:ring-2 focus:ring-cyan-300/20'
 
 const initialForm = {
   title: '',
@@ -62,17 +62,17 @@ export function SubmitProposal({ walletAddress }) {
 
   return (
     <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-      <div className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-300/[0.06] p-7 backdrop-blur-xl">
-        <p className="text-sm font-semibold uppercase text-fuchsia-300">Proposal studio</p>
+      <div className="ai-panel rounded-2xl p-7">
+        <p className="ai-kicker text-violet-300">Proposal intake</p>
         <h1 className="mt-4 text-3xl font-semibold text-white md:text-4xl">Submit Proposal</h1>
-        <p className="mt-3 text-xl text-slate-200">Draft a governance action.</p>
+        <p className="mt-3 text-xl text-slate-200">Draft a governance action for AI review.</p>
         <p className="mt-4 text-sm leading-6 text-slate-300">
           {genlayerConfig.mockMode
             ? 'Mock mode is on, so submissions stay inside the frontend demo.'
             : 'Real mode is on, so submissions are sent through your connected wallet.'}
         </p>
 
-        <div className="mt-6 rounded-xl border border-cyan-300/20 bg-black/20 p-4">
+        <div className="ai-card mt-6 rounded-xl p-4">
           <p className="text-sm font-semibold text-cyan-200">
             {genlayerConfig.mockMode ? 'Mock AI analyzer' : 'GenLayer AI analyzer'}
           </p>
@@ -83,18 +83,18 @@ export function SubmitProposal({ walletAddress }) {
           </p>
         </div>
 
-        <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
+        <div className="ai-card mt-4 rounded-xl p-4">
           <p className="text-sm font-semibold text-slate-200">Creator address</p>
             <p className="mt-2 break-words text-sm text-slate-300">
-              {walletAddress || 'Connect the mock wallet to submit as 0xA17c...GovMind.'}
+              {walletAddress || 'Connect a wallet to submit with your address.'}
             </p>
         </div>
 
         {submittedProposal && (
           <div className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-4">
-            <p className="text-sm font-semibold text-emerald-200">Submitted mock proposal</p>
+            <p className="text-sm font-semibold text-emerald-200">Submitted proposal</p>
             <p className="mt-2 break-words text-sm text-slate-300">
-              ID #{submittedProposal.id} is stored in the mock GenLayer service
+              ID #{submittedProposal.id} is stored in the GovMind service
               by {submittedProposal.creator}.
             </p>
           </div>
@@ -104,7 +104,7 @@ export function SubmitProposal({ walletAddress }) {
       <div className="grid gap-6">
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-white/10 bg-white/[0.06] p-6 backdrop-blur-xl"
+          className="ai-panel rounded-2xl p-6"
         >
           <div className="grid gap-5">
             <label className="grid gap-2 text-sm text-slate-300">
@@ -160,7 +160,7 @@ export function SubmitProposal({ walletAddress }) {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-5 py-3 text-sm font-semibold text-white shadow-[0_0_28px_rgba(168,85,247,0.35)] transition hover:brightness-110"
+                className="ai-primary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isSubmitting
                   ? 'Analyzing...'
@@ -176,7 +176,7 @@ export function SubmitProposal({ walletAddress }) {
                   setSubmittedProposal(null)
                   setError('')
                 }}
-                className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-cyan-300/50"
+                className="ai-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-cyan-300/20"
               >
                 Reset
               </button>
@@ -197,10 +197,10 @@ export function SubmitProposal({ walletAddress }) {
 
 function AnalysisResult({ analysis }) {
   return (
-    <section className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] p-6 shadow-2xl shadow-cyan-950/20 backdrop-blur-xl">
+    <section className="ai-panel rounded-2xl p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold uppercase text-cyan-300">Mock AI Analysis</p>
+          <p className="ai-kicker">AI analysis packet</p>
           <h2 className="mt-2 text-2xl font-semibold text-white">Proposal Review Result</h2>
         </div>
         <span
@@ -219,7 +219,7 @@ function AnalysisResult({ analysis }) {
         <ScoreCard label="Governance attack risk" value={analysis.governance_attack_risk} />
       </div>
 
-      <div className="mt-6 rounded-xl border border-white/10 bg-black/20 p-5">
+      <div className="ai-card mt-6 rounded-xl p-5">
         <h3 className="text-base font-semibold text-white">Summary</h3>
         <p className="mt-3 text-sm leading-6 text-slate-300">{analysis.summary}</p>
       </div>
@@ -244,7 +244,7 @@ function AnalysisResult({ analysis }) {
 
 function ScoreCard({ label, value }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+    <div className="ai-card rounded-xl p-4">
       <p className="text-xs text-slate-400">{label}</p>
       <p className="mt-2 text-xl font-semibold text-white">{value}</p>
     </div>
@@ -253,7 +253,7 @@ function ScoreCard({ label, value }) {
 
 function ResultList({ accent, items, title }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-5">
+    <div className="ai-card rounded-xl p-5">
       <h3 className={`text-base font-semibold ${accent}`}>{title}</h3>
       <ul className="mt-3 grid gap-2 text-sm leading-6 text-slate-300">
         {items.map((item) => (

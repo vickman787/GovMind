@@ -23,7 +23,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
 
   if (!proposal) {
     return (
-      <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-7 backdrop-blur-xl">
+      <section className="ai-panel rounded-2xl p-7">
         <h1 className="text-3xl font-semibold text-white md:text-4xl">Proposal Details</h1>
         <p className="mt-4 text-sm text-slate-300">Loading mock proposal details...</p>
       </section>
@@ -32,9 +32,9 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-      <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-7 backdrop-blur-xl">
+      <section className="ai-panel rounded-2xl p-7">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-semibold uppercase text-cyan-300">
+          <p className="ai-kicker">
             Proposal #{proposal.id}
           </p>
           <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-200">
@@ -45,7 +45,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
         <h2 className="mt-3 text-2xl font-semibold text-slate-100">{proposal.title}</h2>
         <p className="mt-3 break-words text-sm text-slate-400">Submitted by {proposal.creator}</p>
         <p className="mt-6 text-base leading-7 text-slate-300">{proposal.proposal_text}</p>
-        <div className="mt-6 rounded-xl border border-cyan-300/20 bg-cyan-300/[0.06] p-5">
+        <div className="ai-card mt-6 rounded-xl p-5">
           <h2 className="text-base font-semibold text-white">AI Summary</h2>
           <p className="mt-3 text-sm leading-6 text-slate-300">
             {proposal.analysis?.summary ?? 'This proposal has not been analyzed yet.'}
@@ -59,7 +59,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
         </div>
       </section>
 
-      <aside className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-300/[0.06] p-5 backdrop-blur-xl">
+      <aside className="ai-panel rounded-2xl p-5">
         <h2 className="text-lg font-semibold text-white">Proposal Switcher</h2>
         <div className="mt-4 grid gap-3">
           {proposals.map((item) => (
@@ -73,7 +73,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
               className={`rounded-xl border p-3 text-left text-sm transition ${
                 item.id === proposal.id
                   ? 'border-cyan-300/60 bg-cyan-300/10 text-cyan-100'
-                  : 'border-white/10 bg-black/20 text-slate-300 hover:border-fuchsia-300/50'
+                  : 'border-white/10 bg-black/20 text-slate-300 hover:border-cyan-300/50'
               }`}
             >
               <span className="block text-xs text-slate-400">Proposal #{item.id}</span>
@@ -88,7 +88,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
 
 function Metric({ label, value }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+    <div className="ai-card rounded-xl p-4">
       <p className="text-xs text-slate-400">{label}</p>
       <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
     </div>

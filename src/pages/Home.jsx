@@ -16,41 +16,49 @@ export function Home({ onNavigate }) {
   return (
     <div className="flex flex-col gap-8">
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-7 shadow-2xl shadow-fuchsia-950/30 backdrop-blur-xl md:p-10">
-          <p className="text-sm font-semibold uppercase text-cyan-300">DAO intelligence layer</p>
+        <div className="ai-panel rounded-2xl p-7 md:p-10">
+          <p className="ai-kicker">AI governance console</p>
           <div className="space-y-5">
             <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-white md:text-5xl">
-              Govern faster with proposals, signals, and reputation in one command center.
+              Analyze proposals, risk, and reputation from one intelligence layer.
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-slate-300">
-              GovMind is a mock DAO interface for exploring proposal flow,
-              voting health, and contributor rankings before any chain
-              integration is added.
+              GovMind turns governance submissions into structured AI reviews,
+              treasury signals, and contributor reputation so DAO decisions feel
+              easier to inspect.
             </p>
+          </div>
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            {['Proposal intake', 'AI risk scan', 'Onchain memory'].map((label) => (
+              <div key={label} className="ai-card rounded-xl px-4 py-3">
+                <p className="text-xs font-semibold uppercase text-emerald-300">{label}</p>
+                <div className="mt-3 h-1 rounded-full bg-gradient-to-r from-cyan-300 via-violet-400 to-emerald-300" />
+              </div>
+            ))}
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => onNavigate('submit')}
-              className="rounded-full bg-fuchsia-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_0_28px_rgba(217,70,239,0.35)] transition hover:bg-fuchsia-400"
+              className="ai-primary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110"
             >
               Submit Proposal
             </button>
             <button
               type="button"
               onClick={() => onNavigate('dashboard')}
-              className="rounded-full border border-cyan-300/50 bg-cyan-300/10 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/20"
+              className="ai-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-cyan-300/20"
             >
               View Dashboard
             </button>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.06] p-6 shadow-2xl shadow-emerald-950/20 backdrop-blur-xl">
-          <p className="text-sm font-semibold text-emerald-300">Network Pulse</p>
+        <div className="ai-panel rounded-2xl p-6">
+          <p className="ai-kicker text-emerald-300">Live network pulse</p>
           <div className="space-y-4">
             {networkStats.map((stat) => (
-              <div key={stat.label} className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
+              <div key={stat.label} className="ai-card mt-4 rounded-xl p-4">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-sm text-slate-400">{stat.label}</span>
                   <span className="text-xl font-semibold text-white">{stat.value}</span>
@@ -64,7 +72,7 @@ export function Home({ onNavigate }) {
               </div>
             ))}
             {networkStats.length === 0 && (
-              <p className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4 text-sm text-slate-300">
+              <p className="ai-card mt-4 rounded-xl p-4 text-sm text-slate-300">
                 Loading GenLayer data...
               </p>
             )}
@@ -73,19 +81,19 @@ export function Home({ onNavigate }) {
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <article className="rounded-2xl border border-white/10 bg-white/[0.05] p-5 backdrop-blur-xl">
+        <article className="ai-panel rounded-2xl p-5">
           <h2 className="mb-3 text-base font-semibold text-white">Proposal Flow</h2>
           <p className="text-sm leading-6 text-slate-400">
-            Draft, review, and inspect mock proposals without smart contracts.
+            Draft, review, and inspect proposals before voters commit to action.
           </p>
         </article>
-        <article className="rounded-2xl border border-white/10 bg-white/[0.05] p-5 backdrop-blur-xl">
-          <h2 className="mb-3 text-base font-semibold text-white">DAO Telemetry</h2>
+        <article className="ai-panel rounded-2xl p-5">
+          <h2 className="mb-3 text-base font-semibold text-white">Risk Telemetry</h2>
           <p className="text-sm leading-6 text-slate-400">
             Track participation, quorum, treasury impact, and contributor activity.
           </p>
         </article>
-        <article className="rounded-2xl border border-white/10 bg-white/[0.05] p-5 backdrop-blur-xl">
+        <article className="ai-panel rounded-2xl p-5">
           <h2 className="mb-3 text-base font-semibold text-white">Reputation Layer</h2>
           <p className="text-sm leading-6 text-slate-400">
             Surface mock leaders by voting weight, proposal quality, and review streak.
