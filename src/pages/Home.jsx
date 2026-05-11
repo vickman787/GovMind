@@ -14,15 +14,15 @@ export function Home({ onNavigate }) {
   }, [])
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-5 sm:gap-8">
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
-        <div className="ai-panel rounded-2xl p-7 md:p-10">
+        <div className="ai-panel rounded-2xl p-5 sm:p-7 md:p-10">
           <p className="ai-kicker">AI governance console</p>
           <div className="space-y-5">
-            <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-white md:text-5xl">
+            <h1 className="mt-4 max-w-3xl text-3xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl">
               Analyze proposals, risk, and reputation from one intelligence layer.
             </h1>
-            <p className="max-w-2xl text-lg leading-8 text-slate-300">
+            <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
               GovMind turns governance submissions into structured AI reviews,
               treasury signals, and contributor reputation so DAO decisions feel
               easier to inspect.
@@ -40,21 +40,21 @@ export function Home({ onNavigate }) {
             <button
               type="button"
               onClick={() => onNavigate('submit')}
-              className="ai-primary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110"
+              className="ai-primary-button w-full rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110 sm:w-auto"
             >
               Submit Proposal
             </button>
             <button
               type="button"
               onClick={() => onNavigate('dashboard')}
-              className="ai-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-cyan-300/20"
+              className="ai-secondary-button w-full rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-cyan-300/20 sm:w-auto"
             >
               View Dashboard
             </button>
           </div>
         </div>
 
-        <div className="ai-panel rounded-2xl p-6">
+        <div className="ai-panel rounded-2xl p-5 sm:p-6">
           <p className="ai-kicker text-emerald-300">Live network pulse</p>
           <div className="space-y-4">
             {networkStats.map((stat) => (

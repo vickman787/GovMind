@@ -3,7 +3,7 @@ import { genlayerConfig } from '../config/genlayerConfig'
 import { analyzeProposal, submitProposal } from '../services/genlayerService'
 
 const inputStyle =
-  'w-full rounded-xl border border-cyan-300/10 bg-slate-950/55 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-300/70 focus:ring-2 focus:ring-cyan-300/20'
+  'w-full rounded-xl border border-cyan-300/10 bg-slate-950/55 px-4 py-3 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-300/70 focus:ring-2 focus:ring-cyan-300/20 sm:text-sm'
 
 const initialForm = {
   title: '',
@@ -62,10 +62,12 @@ export function SubmitProposal({ walletAddress }) {
 
   return (
     <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-      <div className="ai-panel rounded-2xl p-7">
+      <div className="ai-panel rounded-2xl p-5 sm:p-7">
         <p className="ai-kicker text-violet-300">Proposal intake</p>
         <h1 className="mt-4 text-3xl font-semibold text-white md:text-4xl">Submit Proposal</h1>
-        <p className="mt-3 text-xl text-slate-200">Draft a governance action for AI review.</p>
+        <p className="mt-3 text-lg text-slate-200 sm:text-xl">
+          Draft a governance action for AI review.
+        </p>
         <p className="mt-4 text-sm leading-6 text-slate-300">
           {genlayerConfig.mockMode
             ? 'Mock mode is on, so submissions stay inside the frontend demo.'
@@ -104,7 +106,7 @@ export function SubmitProposal({ walletAddress }) {
       <div className="grid gap-6">
         <form
           onSubmit={handleSubmit}
-          className="ai-panel rounded-2xl p-6"
+          className="ai-panel rounded-2xl p-5 sm:p-6"
         >
           <div className="grid gap-5">
             <label className="grid gap-2 text-sm text-slate-300">
@@ -160,7 +162,7 @@ export function SubmitProposal({ walletAddress }) {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="ai-primary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+                className="ai-primary-button w-full rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
               >
                 {isSubmitting
                   ? 'Analyzing...'
@@ -176,7 +178,7 @@ export function SubmitProposal({ walletAddress }) {
                   setSubmittedProposal(null)
                   setError('')
                 }}
-                className="ai-secondary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-cyan-300/20"
+                className="ai-secondary-button w-full rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-cyan-300/20 sm:w-auto"
               >
                 Reset
               </button>
@@ -197,14 +199,16 @@ export function SubmitProposal({ walletAddress }) {
 
 function AnalysisResult({ analysis }) {
   return (
-    <section className="ai-panel rounded-2xl p-6">
+    <section className="ai-panel rounded-2xl p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="ai-kicker">AI analysis packet</p>
-          <h2 className="mt-2 text-2xl font-semibold text-white">Proposal Review Result</h2>
+          <h2 className="mt-2 text-xl font-semibold text-white sm:text-2xl">
+            Proposal Review Result
+          </h2>
         </div>
         <span
-          className={`rounded-full border px-4 py-2 text-sm font-semibold ${
+          className={`rounded-full border px-3 py-2 text-xs font-semibold sm:px-4 sm:text-sm ${
             recommendationStyles[analysis.recommendation]
           }`}
         >
@@ -246,7 +250,7 @@ function ScoreCard({ label, value }) {
   return (
     <div className="ai-card rounded-xl p-4">
       <p className="text-xs text-slate-400">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-white">{value}</p>
+      <p className="mt-2 break-words text-lg font-semibold text-white sm:text-xl">{value}</p>
     </div>
   )
 }

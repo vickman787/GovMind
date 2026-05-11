@@ -22,9 +22,11 @@ export function Dashboard({ onNavigate }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="ai-panel rounded-2xl p-7">
+      <section className="ai-panel rounded-2xl p-5 sm:p-7">
         <p className="ai-kicker">DAO activity overview</p>
-        <h1 className="mt-3 text-3xl font-semibold text-white md:text-4xl">Intelligence Dashboard</h1>
+        <h1 className="mt-3 text-3xl font-semibold text-white md:text-4xl">
+          Intelligence Dashboard
+        </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
           Track proposal throughput, analysis progress, and contributor signal from the GenLayer service.
         </p>
@@ -34,7 +36,7 @@ export function Dashboard({ onNavigate }) {
         {networkStats.map((stat) => (
           <article
             key={stat.label}
-            className="ai-panel rounded-2xl p-5"
+            className="ai-panel rounded-2xl p-4 sm:p-5"
           >
             <p className="text-sm text-slate-400">{stat.label}</p>
             <p className="mt-3 text-3xl font-semibold text-white">{stat.value}</p>
@@ -53,7 +55,7 @@ export function Dashboard({ onNavigate }) {
         )}
       </section>
 
-      <section className="ai-panel rounded-2xl p-5">
+      <section className="ai-panel rounded-2xl p-4 sm:p-5">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-white">Proposal Queue</h2>
           <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-200">
@@ -76,12 +78,14 @@ export function Dashboard({ onNavigate }) {
                 onClick={() => onNavigate('details', proposal.id)}
                 className="ai-card grid gap-3 rounded-xl p-4 text-left transition hover:border-cyan-300/50 md:grid-cols-[1fr_auto]"
               >
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-cyan-300">Proposal #{proposal.id}</p>
-                  <h3 className="mt-2 font-semibold text-white">{proposal.title}</h3>
-                  <p className="mt-2 text-sm text-slate-400">{proposal.proposal_text}</p>
+                  <h3 className="mt-2 break-words font-semibold text-white">{proposal.title}</h3>
+                  <p className="mt-2 break-words text-sm leading-6 text-slate-400">
+                    {proposal.proposal_text}
+                  </p>
                 </div>
-                <div className="flex items-center gap-3 md:justify-end">
+                <div className="flex flex-wrap items-center gap-3 md:justify-end">
                   <span className="rounded-full bg-fuchsia-400/10 px-3 py-1 text-xs text-fuchsia-200">
                     {proposal.status}
                   </span>

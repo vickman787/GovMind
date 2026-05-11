@@ -23,7 +23,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
 
   if (!proposal) {
     return (
-      <section className="ai-panel rounded-2xl p-7">
+      <section className="ai-panel rounded-2xl p-5 sm:p-7">
         <h1 className="text-3xl font-semibold text-white md:text-4xl">Proposal Details</h1>
         <p className="mt-4 text-sm text-slate-300">Loading mock proposal details...</p>
       </section>
@@ -32,7 +32,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-      <section className="ai-panel rounded-2xl p-7">
+      <section className="ai-panel rounded-2xl p-5 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="ai-kicker">
             Proposal #{proposal.id}
@@ -42,9 +42,13 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
           </span>
         </div>
         <h1 className="mt-4 text-3xl font-semibold text-white md:text-4xl">Proposal Details</h1>
-        <h2 className="mt-3 text-2xl font-semibold text-slate-100">{proposal.title}</h2>
+        <h2 className="mt-3 break-words text-xl font-semibold text-slate-100 sm:text-2xl">
+          {proposal.title}
+        </h2>
         <p className="mt-3 break-words text-sm text-slate-400">Submitted by {proposal.creator}</p>
-        <p className="mt-6 text-base leading-7 text-slate-300">{proposal.proposal_text}</p>
+        <p className="mt-6 break-words text-sm leading-7 text-slate-300 sm:text-base">
+          {proposal.proposal_text}
+        </p>
         <div className="ai-card mt-6 rounded-xl p-5">
           <h2 className="text-base font-semibold text-white">AI Summary</h2>
           <p className="mt-3 text-sm leading-6 text-slate-300">
@@ -90,7 +94,7 @@ function Metric({ label, value }) {
   return (
     <div className="ai-card rounded-xl p-4">
       <p className="text-xs text-slate-400">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
+      <p className="mt-2 break-words text-xl font-semibold text-white sm:text-2xl">{value}</p>
     </div>
   )
 }

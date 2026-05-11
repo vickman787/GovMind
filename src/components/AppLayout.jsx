@@ -20,24 +20,24 @@ export function AppLayout({
   return (
     <div className="console-grid min-h-screen overflow-hidden text-slate-100">
       <header className="sticky top-0 z-20 border-b border-cyan-300/10 bg-slate-950/82 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-4">
           <button
             type="button"
             onClick={() => onNavigate('home')}
-            className="text-left text-lg font-semibold text-white"
+            className="order-1 text-left text-lg font-semibold text-white"
           >
             GovMind
           </button>
           <nav
             aria-label="Primary navigation"
-            className="flex w-full items-center gap-2 overflow-x-auto text-sm text-slate-300 md:w-auto"
+            className="order-3 flex w-full items-center gap-2 overflow-x-auto pb-1 text-sm text-slate-300 md:order-2 md:w-auto md:pb-0"
           >
             {navItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => onNavigate(item.id)}
-                className={`shrink-0 rounded-full border px-4 py-2 transition ${
+                className={`shrink-0 rounded-full border px-3 py-2 text-xs transition sm:px-4 sm:text-sm ${
                   activePage === item.id
                     ? 'border-cyan-300/60 bg-cyan-300/10 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.18)]'
                     : 'border-slate-700/80 bg-slate-950/60 text-slate-300 hover:border-violet-300/50 hover:text-white'
@@ -47,13 +47,13 @@ export function AppLayout({
               </button>
             ))}
           </nav>
-          <div className="flex w-full justify-start md:w-auto md:justify-end">
+          <div className="order-2 flex max-w-[58%] justify-end md:order-3 md:max-w-none">
             {walletAddress ? (
               <button
                 type="button"
                 onClick={onDisconnectWallet}
                 title="Disconnect wallet"
-                className="rounded-full border border-emerald-300/40 bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:border-rose-300/60 hover:bg-rose-300/10 hover:text-rose-100"
+                className="max-w-full truncate rounded-full border border-emerald-300/40 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:border-rose-300/60 hover:bg-rose-300/10 hover:text-rose-100 sm:px-4 sm:text-sm"
               >
                 Disconnect: {shortAddress}
               </button>
@@ -61,7 +61,7 @@ export function AppLayout({
               <button
                 type="button"
                 onClick={onConnectBrowserWallet}
-                className="rounded-full border border-cyan-300/50 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.16)] transition hover:bg-cyan-300/20"
+                className="rounded-full border border-cyan-300/50 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.16)] transition hover:bg-cyan-300/20 sm:px-4 sm:text-sm"
               >
                 Connect Wallet
               </button>
@@ -73,7 +73,7 @@ export function AppLayout({
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-5 py-8 md:py-12">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-5 md:py-12">{children}</main>
     </div>
   )
 }
