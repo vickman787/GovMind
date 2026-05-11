@@ -1,37 +1,16 @@
 import { useEffect, useState } from 'react'
-import { leaderboard } from '../data/mockData'
-import { getUserReputation } from '../services/genlayerService'
-
-const leaderboardAddresses = {
-  'Nova Council': '0xMockCreator001',
-  'Astra Labs': '0xMockDelegate002',
-  'Signal Guild': '0xMockSignal003',
-  'Mira Chen': '0xMockMira004',
-  'Orbit Forum': '0xMockOrbit005',
-}
+import { getLeaderboard } from '../services/genlayerService'
 
 export function Leaderboard() {
   const [members, setMembers] = useState([])
 
   useEffect(() => {
-    async function loadReputation() {
-      const membersWithReputation = await Promise.all(
-        leaderboard.map(async (member) => {
-          const address = leaderboardAddresses[member.name]
-          const reputation = await getUserReputation(address)
-
-          return {
-            ...member,
-            address,
-            score: reputation.reputation,
-          }
-        }),
-      )
-
-      setMembers(membersWithReputation)
+    async function loadLeaderboard() {
+      const leaderboardMembers = await getLeaderboard()
+      setMembers(leaderboardMembers)
     }
 
-    loadReputation()
+    loadLeaderboard()
   }, [])
 
   return (
@@ -47,6 +26,12 @@ export function Leaderboard() {
       </div>
 
       <div className="grid gap-3">
+        {members.length === 0 && (
+          <p className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm text-slate-300">
+            No leaderboard users yet. Submit a proposal with a connected wallet to appear here.
+          </p>
+        )}
+
         {members.map((member) => (
           <article
             key={member.rank}

@@ -9,10 +9,14 @@ const navItems = [
 export function AppLayout({
   activePage,
   children,
-  onConnectWallet,
+  onConnectBrowserWallet,
+  onDisconnectWallet,
   onNavigate,
   walletAddress,
+  walletError,
 }) {
+  const shortAddress = formatAddress(walletAddress)
+
   return (
     <div className="min-h-screen overflow-hidden bg-[#05020d] text-slate-100">
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_34%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.2),transparent_32%),radial-gradient(circle_at_50%_90%,rgba(74,222,128,0.12),transparent_28%)]" />
@@ -46,23 +50,43 @@ export function AppLayout({
           </nav>
           <div className="flex w-full justify-start md:w-auto md:justify-end">
             {walletAddress ? (
-              <span className="rounded-full border border-emerald-300/40 bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200">
-                Connected: {walletAddress}
-              </span>
+              <button
+                type="button"
+                onClick={onDisconnectWallet}
+                title="Disconnect wallet"
+                className="rounded-full border border-emerald-300/40 bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:border-rose-300/60 hover:bg-rose-300/10 hover:text-rose-100"
+              >
+                Disconnect: {shortAddress}
+              </button>
             ) : (
               <button
                 type="button"
-                onClick={onConnectWallet}
+                onClick={onConnectBrowserWallet}
                 className="rounded-full border border-fuchsia-300/50 bg-fuchsia-300/10 px-4 py-2 text-sm font-semibold text-fuchsia-100 shadow-[0_0_24px_rgba(217,70,239,0.16)] transition hover:bg-fuchsia-300/20"
               >
                 Connect Wallet
               </button>
             )}
           </div>
+          {walletError && (
+            <p className="w-full text-xs text-amber-300 md:text-right">{walletError}</p>
+          )}
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-5 py-8 md:py-12">{children}</main>
     </div>
   )
+}
+
+function formatAddress(address) {
+  if (!address) {
+    return ''
+  }
+
+  if (address.includes('...')) {
+    return address
+  }
+
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
 }

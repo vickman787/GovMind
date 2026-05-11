@@ -6,12 +6,11 @@ import { Leaderboard } from './pages/Leaderboard'
 import { ProposalDetails } from './pages/ProposalDetails'
 import { SubmitProposal } from './pages/SubmitProposal'
 
-const MOCK_WALLET_ADDRESS = '0xA17c...GovMind'
-
 function App() {
   const [activePage, setActivePage] = useState('home')
   const [activeProposalId, setActiveProposalId] = useState(1)
   const [walletAddress, setWalletAddress] = useState('')
+  const [walletError, setWalletError] = useState('')
 
   const navigate = (page, proposalId) => {
     if (proposalId) {
@@ -35,12 +34,45 @@ function App() {
     leaderboard: <Leaderboard />,
   }
 
+  const connectBrowserWallet = async () => {
+    setWalletError('')
+
+    if (!window.ethereum) {
+      setWalletError('No browser wallet found.')
+      return
+    }
+
+    try {
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      })
+      const connectedAddress = accounts[0] ?? ''
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(connectedAddress)) {
+        setWalletError('Wallet did not return a valid 0x address.')
+        setWalletAddress('')
+        return
+      }
+
+      setWalletAddress(connectedAddress)
+    } catch (error) {
+      setWalletError(error.message)
+    }
+  }
+
+  const disconnectWallet = () => {
+    setWalletAddress('')
+    setWalletError('')
+  }
+
   return (
     <AppLayout
       activePage={activePage}
-      onConnectWallet={() => setWalletAddress(MOCK_WALLET_ADDRESS)}
+      onConnectBrowserWallet={connectBrowserWallet}
+      onDisconnectWallet={disconnectWallet}
       onNavigate={navigate}
       walletAddress={walletAddress}
+      walletError={walletError}
     >
       {pages[activePage]}
     </AppLayout>

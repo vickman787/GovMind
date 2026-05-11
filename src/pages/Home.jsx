@@ -1,6 +1,18 @@
-import { mockStats } from '../data/mockData'
+import { useEffect, useState } from 'react'
+import { getNetworkStats } from '../services/genlayerService'
 
 export function Home({ onNavigate }) {
+  const [networkStats, setNetworkStats] = useState([])
+
+  useEffect(() => {
+    async function loadNetworkStats() {
+      const stats = await getNetworkStats()
+      setNetworkStats(stats.slice(0, 3))
+    }
+
+    loadNetworkStats()
+  }, [])
+
   return (
     <div className="flex flex-col gap-8">
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
@@ -37,7 +49,7 @@ export function Home({ onNavigate }) {
         <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.06] p-6 shadow-2xl shadow-emerald-950/20 backdrop-blur-xl">
           <p className="text-sm font-semibold text-emerald-300">Network Pulse</p>
           <div className="space-y-4">
-            {mockStats.map((stat) => (
+            {networkStats.map((stat) => (
               <div key={stat.label} className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-sm text-slate-400">{stat.label}</span>
@@ -51,6 +63,11 @@ export function Home({ onNavigate }) {
                 </div>
               </div>
             ))}
+            {networkStats.length === 0 && (
+              <p className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4 text-sm text-slate-300">
+                Loading GenLayer data...
+              </p>
+            )}
           </div>
         </div>
       </section>

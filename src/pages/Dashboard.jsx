@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
-import { mockStats } from '../data/mockData'
-import { getAllProposals } from '../services/genlayerService'
+import { getAllProposals, getNetworkStats } from '../services/genlayerService'
 
 export function Dashboard({ onNavigate }) {
   const [proposals, setProposals] = useState([])
+  const [networkStats, setNetworkStats] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function loadProposals() {
-      const serviceProposals = await getAllProposals()
+      const [serviceProposals, serviceStats] = await Promise.all([
+        getAllProposals(),
+        getNetworkStats(),
+      ])
       setProposals(serviceProposals)
+      setNetworkStats(serviceStats.slice(0, 3))
       setIsLoading(false)
     }
 
@@ -24,7 +28,7 @@ export function Dashboard({ onNavigate }) {
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        {mockStats.map((stat) => (
+        {networkStats.map((stat) => (
           <article
             key={stat.label}
             className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl"
@@ -39,13 +43,18 @@ export function Dashboard({ onNavigate }) {
             </div>
           </article>
         ))}
+        {networkStats.length === 0 && (
+          <article className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 text-sm text-slate-300 backdrop-blur-xl">
+            Loading GenLayer stats...
+          </article>
+        )}
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-white">Proposal Queue</h2>
           <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-200">
-            Mock service data
+            GenLayer service data
           </span>
         </div>
 

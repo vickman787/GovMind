@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { genlayerConfig } from '../config/genlayerConfig'
 import { analyzeProposal, submitProposal } from '../services/genlayerService'
 
 const inputStyle =
@@ -36,6 +37,10 @@ export function SubmitProposal({ walletAddress }) {
     setError('')
 
     try {
+      if (!genlayerConfig.mockMode && !walletAddress) {
+        throw new Error('Connect your wallet before sending a GenLayer transaction.')
+      }
+
       const proposal = await submitProposal({
         title: formData.title,
         proposal_text: formData.description,
@@ -44,7 +49,7 @@ export function SubmitProposal({ walletAddress }) {
         treasury_amount: formData.treasuryAmount,
         requested_funding: formData.requestedFunding,
       })
-      const result = await analyzeProposal(proposal.id)
+      const result = await analyzeProposal(proposal.id, walletAddress)
 
       setSubmittedProposal(proposal)
       setAnalysis(result)
@@ -62,15 +67,19 @@ export function SubmitProposal({ walletAddress }) {
         <h1 className="mt-4 text-3xl font-semibold text-white md:text-4xl">Submit Proposal</h1>
         <p className="mt-3 text-xl text-slate-200">Draft a governance action.</p>
         <p className="mt-4 text-sm leading-6 text-slate-300">
-          This is a frontend-only mock form. Submissions are not saved, sent, or
-          connected to any wallet or backend.
+          {genlayerConfig.mockMode
+            ? 'Mock mode is on, so submissions stay inside the frontend demo.'
+            : 'Real mode is on, so submissions are sent through your connected wallet.'}
         </p>
 
         <div className="mt-6 rounded-xl border border-cyan-300/20 bg-black/20 p-4">
-          <p className="text-sm font-semibold text-cyan-200">Mock AI analyzer</p>
+          <p className="text-sm font-semibold text-cyan-200">
+            {genlayerConfig.mockMode ? 'Mock AI analyzer' : 'GenLayer AI analyzer'}
+          </p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Fill the form and submit to generate a local-only governance risk
-            review using React state.
+            {genlayerConfig.mockMode
+              ? 'Fill the form and submit to generate a local-only governance risk review.'
+              : 'Fill the form and submit to store the proposal, then request GenLayer analysis.'}
           </p>
         </div>
 
@@ -153,7 +162,11 @@ export function SubmitProposal({ walletAddress }) {
                 disabled={isSubmitting}
                 className="rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-5 py-3 text-sm font-semibold text-white shadow-[0_0_28px_rgba(168,85,247,0.35)] transition hover:brightness-110"
               >
-                {isSubmitting ? 'Analyzing...' : 'Generate Mock AI Analysis'}
+                {isSubmitting
+                  ? 'Analyzing...'
+                  : genlayerConfig.mockMode
+                    ? 'Generate Analysis'
+                    : 'Submit to GenLayer'}
               </button>
               <button
                 type="button"

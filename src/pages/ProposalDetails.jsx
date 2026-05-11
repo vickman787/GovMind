@@ -12,7 +12,9 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
         getAllProposals(),
       ])
 
-      setProposal(serviceProposal.error ? null : serviceProposal)
+      const fallbackProposal = serviceProposals[0] ?? null
+
+      setProposal(serviceProposal.error ? fallbackProposal : serviceProposal)
       setProposals(serviceProposals)
     }
 

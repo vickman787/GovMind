@@ -1,24 +1,30 @@
+# { "Depends": "py-genlayer:test" }
+
 import json
 
-import gl
+from genlayer import *
 
 
-class GovMindContract:
-    """A simple GenLayer Intelligent Contract for storing and analyzing proposals."""
+class GovMindContract(gl.Contract):
+    """Simple GovMind contract for GenLayer Studio testing."""
+
+    # Keep storage simple and Studio-friendly.
+    # Proposal objects are stored as JSON strings.
+    proposals: TreeMap[str, str]
+    user_reputation: TreeMap[str, str]
+    user_addresses: TreeMap[str, str]
+    proposal_count: u256
+    user_count: u256
 
     def __init__(self):
-        # Proposals are stored by numeric ID so they are easy to fetch later.
-        self.proposals = {}
-        self.next_proposal_id = 1
+        self.proposal_count = u256(0)
+        self.user_count = u256(0)
 
-        # Reputation is kept separate from proposals so it can be expanded later.
-        self.user_reputation = {}
-
-    def submit_proposal(self, title, proposal_text, evidence_url):
-        """Create a proposal and return its stored JSON record."""
-        creator = gl.message.sender
-        proposal_id = self.next_proposal_id
-        self.next_proposal_id += 1
+    @gl.public.write
+    def submit_proposal(self, title: str, proposal_text: str, evidence_url: str) -> str:
+        """Store a proposal. This function does not use AI or web access."""
+        proposal_id = str(int(self.proposal_count))
+        creator = str(gl.message.sender_address)
 
         proposal = {
             "id": proposal_id,
@@ -27,42 +33,49 @@ class GovMindContract:
             "evidence_url": evidence_url,
             "creator": creator,
             "ai_analysis": None,
-            "timestamp": gl.block.timestamp,
+            "timestamp": "created_in_genlayer_studio",
         }
 
-        self.proposals[proposal_id] = proposal
+        self.proposals[proposal_id] = self._json(proposal)
+        self.proposal_count = u256(int(self.proposal_count) + 1)
 
-        # Give the creator a small mock reputation point for submitting.
-        self.user_reputation[creator] = self.user_reputation.get(creator, 0) + 1
+        current_reputation = int(self.user_reputation.get(creator, "0"))
+        if current_reputation == 0:
+            self.user_addresses[str(int(self.user_count))] = creator
+            self.user_count = u256(int(self.user_count) + 1)
+
+        self.user_reputation[creator] = str(current_reputation + 1)
 
         return self._json(proposal)
 
-    def analyze_proposal(self, proposal_id):
-        """Fetch evidence, ask AI to analyze the proposal, and store the result."""
-        proposal = self.proposals.get(proposal_id)
-        if proposal is None:
-            return self._json({"error": "PROPOSAL_NOT_FOUND"})
+    @gl.public.write
+    def analyze_proposal(self, proposal_id: str) -> str:
+        """Analyze a proposal and return structured JSON only."""
+        if proposal_id not in self.proposals:
+            return self._json({"error": "PROPOSAL_NOT_FOUND", "proposal_id": proposal_id})
 
-        # Fetch evidence from the provided URL using GenLayer nondeterministic web access.
-        # Keep this simple: the fetched evidence is passed into the AI prompt below.
-        evidence_response = gl.nondet.web.get(proposal["evidence_url"])
+        proposal = json.loads(self.proposals[proposal_id])
+        title = proposal["title"]
+        proposal_text = proposal["proposal_text"]
+        evidence_url = proposal["evidence_url"]
 
-        prompt = f"""
-Analyze this DAO governance proposal and return JSON only.
+        # Web fetching is intentionally skipped for this Studio-safe version.
+        # When the basic contract is stable, gl.nondet.web.get(evidence_url)
+        # can be added back inside leader_fn below.
+        if evidence_url == "":
+            evidence_note = "No evidence URL was provided."
+            evidence_used = []
+        else:
+            evidence_note = f"Evidence URL provided but not fetched in this safe Studio test: {evidence_url}"
+            evidence_used = [evidence_url]
 
-Proposal title:
-{proposal["title"]}
+        def leader_fn():
+            prompt = f"""
+You are analyzing a DAO governance proposal for GovMind.
 
-Proposal text:
-{proposal["proposal_text"]}
+Return JSON only. Do not return markdown. Do not include extra text.
 
-Evidence URL:
-{proposal["evidence_url"]}
-
-Evidence fetched from URL:
-{evidence_response}
-
-Return exactly this JSON shape:
+Required JSON shape:
 {{
   "recommendation": "APPROVE | REJECT | NEEDS_REVISION | INSUFFICIENT_CONTEXT",
   "confidence": 0,
@@ -76,80 +89,176 @@ Return exactly this JSON shape:
   "suggested_improvements": [],
   "evidence_used": []
 }}
-"""
 
-        # Ask the GenLayer AI runtime to produce the structured analysis.
-        ai_response = gl.nondet.exec_prompt(prompt)
-        analysis = self._safe_json_loads(ai_response)
+Rules:
+- recommendation must be one of APPROVE, REJECT, NEEDS_REVISION, INSUFFICIENT_CONTEXT.
+- confidence must be a number from 0 to 100.
+- risk_score must be a number from 0 to 100.
+- treasury_impact must be LOW, MEDIUM, or HIGH.
+- governance_attack_risk must be LOW, MEDIUM, or HIGH.
+- Use INSUFFICIENT_CONTEXT if the proposal is too vague.
+
+Proposal title:
+{title}
+
+Proposal text:
+{proposal_text}
+
+Evidence note:
+{evidence_note}
+"""
+            return gl.nondet.exec_prompt(prompt, response_format="json")
+
+        def validator_fn(leader_result):
+            if not isinstance(leader_result, gl.vm.Return):
+                return False
+
+            return self._analysis_has_valid_shape(leader_result.calldata)
+
+        raw_analysis = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
+        analysis = self._normalize_analysis(raw_analysis)
+        analysis["evidence_used"] = evidence_used
 
         proposal["ai_analysis"] = analysis
-        self.proposals[proposal_id] = proposal
+        self.proposals[proposal_id] = self._json(proposal)
 
         return self._json(analysis)
 
-    def get_proposal(self, proposal_id):
+    @gl.public.view
+    def get_proposal(self, proposal_id: str) -> str:
         """Return one proposal by ID."""
-        proposal = self.proposals.get(proposal_id)
-        if proposal is None:
-            return self._json({"error": "PROPOSAL_NOT_FOUND"})
+        if proposal_id not in self.proposals:
+            return self._json({"error": "PROPOSAL_NOT_FOUND", "proposal_id": proposal_id})
 
-        return self._json(proposal)
+        return self.proposals[proposal_id]
 
-    def get_all_proposals(self):
-        """Return every stored proposal as a list."""
-        return self._json(list(self.proposals.values()))
+    @gl.public.view
+    def get_all_proposals(self) -> str:
+        """Return all stored proposals."""
+        proposals = []
 
-    def get_user_reputation(self, address):
-        """Return a user's current mock reputation score."""
+        for index in range(int(self.proposal_count)):
+            proposal_id = str(index)
+            if proposal_id in self.proposals:
+                proposals.append(json.loads(self.proposals[proposal_id]))
+
+        return self._json(proposals)
+
+    @gl.public.view
+    def get_user_reputation(self, address: str) -> str:
+        """Return a user's simple reputation score."""
         return self._json(
             {
                 "address": address,
-                "reputation": self.user_reputation.get(address, 0),
+                "reputation": int(self.user_reputation.get(address, "0")),
             }
         )
 
-    def _safe_json_loads(self, value):
-        """Convert an AI JSON string into a Python dictionary with a safe fallback."""
-        try:
-            parsed = json.loads(value)
-        except Exception:
-            parsed = {
-                "recommendation": "INSUFFICIENT_CONTEXT",
-                "confidence": 0,
-                "risk_score": 0,
-                "treasury_impact": "LOW",
-                "governance_attack_risk": "LOW",
-                "summary": "AI response was not valid JSON.",
-                "benefits": [],
-                "risks": ["Analysis could not be parsed."],
-                "missing_details": ["Valid JSON analysis response."],
-                "suggested_improvements": ["Run analysis again with clearer proposal details."],
-                "evidence_used": [],
-            }
+    @gl.public.view
+    def get_leaderboard(self) -> str:
+        """Return all users with reputation scores for leaderboard display."""
+        users = []
 
-        return self._normalize_analysis(parsed)
+        for index in range(int(self.user_count)):
+            address = self.user_addresses[str(index)]
+            users.append(
+                {
+                    "address": address,
+                    "reputation": int(self.user_reputation.get(address, "0")),
+                }
+            )
+
+        return self._json(users)
+
+    def _analysis_has_valid_shape(self, analysis) -> bool:
+        """Validate the leader result without requiring exact LLM wording."""
+        if not isinstance(analysis, dict):
+            return False
+
+        if analysis.get("recommendation") not in [
+            "APPROVE",
+            "REJECT",
+            "NEEDS_REVISION",
+            "INSUFFICIENT_CONTEXT",
+        ]:
+            return False
+
+        if analysis.get("treasury_impact") not in ["LOW", "MEDIUM", "HIGH"]:
+            return False
+
+        if analysis.get("governance_attack_risk") not in ["LOW", "MEDIUM", "HIGH"]:
+            return False
+
+        return self._is_score(analysis.get("confidence")) and self._is_score(
+            analysis.get("risk_score")
+        )
 
     def _normalize_analysis(self, analysis):
-        """Make sure the analysis always contains every expected JSON field."""
-        defaults = {
-            "recommendation": "INSUFFICIENT_CONTEXT",
-            "confidence": 0,
-            "risk_score": 0,
-            "treasury_impact": "LOW",
-            "governance_attack_risk": "LOW",
-            "summary": "",
-            "benefits": [],
-            "risks": [],
-            "missing_details": [],
-            "suggested_improvements": [],
-            "evidence_used": [],
-        }
-
+        """Ensure analyze_proposal always returns the same JSON fields."""
         if not isinstance(analysis, dict):
             analysis = {}
 
-        return {**defaults, **analysis}
+        return {
+            "recommendation": self._allowed_value(
+                analysis.get("recommendation"),
+                ["APPROVE", "REJECT", "NEEDS_REVISION", "INSUFFICIENT_CONTEXT"],
+                "INSUFFICIENT_CONTEXT",
+            ),
+            "confidence": self._bounded_score(analysis.get("confidence")),
+            "risk_score": self._bounded_score(analysis.get("risk_score")),
+            "treasury_impact": self._allowed_value(
+                analysis.get("treasury_impact"),
+                ["LOW", "MEDIUM", "HIGH"],
+                "LOW",
+            ),
+            "governance_attack_risk": self._allowed_value(
+                analysis.get("governance_attack_risk"),
+                ["LOW", "MEDIUM", "HIGH"],
+                "LOW",
+            ),
+            "summary": str(analysis.get("summary", "")),
+            "benefits": self._safe_list(analysis.get("benefits")),
+            "risks": self._safe_list(analysis.get("risks")),
+            "missing_details": self._safe_list(analysis.get("missing_details")),
+            "suggested_improvements": self._safe_list(
+                analysis.get("suggested_improvements")
+            ),
+            "evidence_used": self._safe_list(analysis.get("evidence_used")),
+        }
 
-    def _json(self, value):
-        """Return structured JSON only."""
-        return json.dumps(value)
+    def _allowed_value(self, value, allowed, fallback: str) -> str:
+        if value in allowed:
+            return value
+
+        return fallback
+
+    def _is_score(self, value) -> bool:
+        try:
+            score = int(value)
+        except Exception:
+            return False
+
+        return 0 <= score <= 100
+
+    def _bounded_score(self, value) -> int:
+        try:
+            score = int(value)
+        except Exception:
+            return 0
+
+        if score < 0:
+            return 0
+        if score > 100:
+            return 100
+
+        return score
+
+    def _safe_list(self, value):
+        if isinstance(value, list):
+            return value
+
+        return []
+
+    def _json(self, value) -> str:
+        """Return structured JSON strings from all public methods."""
+        return json.dumps(value, sort_keys=True)
