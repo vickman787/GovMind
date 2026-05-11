@@ -32,19 +32,9 @@ export function AppLayout({
           <button
             type="button"
             onClick={() => handleNavigate('home')}
-            className="order-1 text-left text-lg font-semibold text-white"
+            className="order-1 shrink-0 text-left text-lg font-semibold text-white"
           >
             GovMind
-          </button>
-
-          <button
-            type="button"
-            aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            aria-expanded={isMobileMenuOpen}
-            onClick={() => setIsMobileMenuOpen((current) => !current)}
-            className="order-2 flex h-10 w-10 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 transition hover:bg-cyan-300/20 md:hidden"
-          >
-            {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
 
           <nav
@@ -66,13 +56,13 @@ export function AppLayout({
               </button>
             ))}
           </nav>
-          <div className="order-4 flex w-full justify-start md:order-3 md:w-auto md:max-w-none md:justify-end">
+          <div className="order-2 flex max-w-[72%] items-center justify-end gap-2 md:order-3 md:max-w-none">
             {walletAddress ? (
               <button
                 type="button"
                 onClick={onDisconnectWallet}
                 title="Disconnect wallet"
-                className="max-w-full truncate rounded-full border border-emerald-300/40 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:border-rose-300/60 hover:bg-rose-300/10 hover:text-rose-100 sm:px-4 sm:text-sm"
+                className="max-w-[150px] truncate rounded-full border border-emerald-300/40 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:border-rose-300/60 hover:bg-rose-300/10 hover:text-rose-100 sm:max-w-none sm:px-4 sm:text-sm"
               >
                 Disconnect: {shortAddress}
               </button>
@@ -85,6 +75,15 @@ export function AppLayout({
                 Connect Wallet
               </button>
             )}
+            <button
+              type="button"
+              aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen((current) => !current)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 transition hover:bg-cyan-300/20 md:hidden"
+            >
+              {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
           </div>
           {walletError && (
             <p className="w-full text-xs text-amber-300 md:text-right">{walletError}</p>
@@ -114,6 +113,18 @@ export function AppLayout({
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-5 md:py-12">{children}</main>
+      <footer className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 pb-8 pt-2 text-sm text-slate-400 sm:px-5">
+        <span>Developed by Vickman</span>
+        <a
+          href="https://x.com/stratton001"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Visit Vickman's Twitter profile"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/20 bg-slate-950/70 text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-300/10"
+        >
+          <span className="text-base font-semibold leading-none">X</span>
+        </a>
+      </footer>
     </div>
   )
 }
