@@ -53,40 +53,40 @@ export function Home({ onNavigate }) {
           </div>
         </div>
 
-        <div className="ai-panel flex flex-col justify-between rounded-2xl p-5 sm:p-6">
+        <div className="ai-panel rounded-2xl p-5 sm:p-6">
           <div>
             <p className="ai-kicker text-emerald-300">DAO Shield</p>
-            <div className="mt-6 flex justify-center">
-              <div className="shield-active relative flex h-44 w-44 items-center justify-center rounded-[2rem] border border-cyan-300/20 bg-slate-950/60 shadow-[0_0_60px_rgba(34,211,238,0.16)] sm:h-56 sm:w-56">
+            <div className="mt-4 flex justify-center">
+              <div className="shield-active relative flex h-40 w-40 items-center justify-center rounded-[2rem] border border-cyan-300/20 bg-slate-950/60 shadow-[0_0_60px_rgba(34,211,238,0.16)] sm:h-48 sm:w-48">
                 <div className="shield-ring absolute inset-4 rounded-[1.5rem] border border-emerald-300/10" />
                 <div className="shield-status-dot absolute right-5 top-5 h-3 w-3 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.9)]" />
                 <img
                   src="/favicon.svg"
                   alt=""
-                  className="shield-logo h-28 w-28 drop-shadow-[0_0_24px_rgba(34,211,238,0.38)] sm:h-36 sm:w-36"
+                  className="shield-logo h-24 w-24 drop-shadow-[0_0_24px_rgba(34,211,238,0.38)] sm:h-32 sm:w-32"
                 />
               </div>
             </div>
-            <div className="mt-6 text-center">
-              <h2 className="text-xl font-semibold text-white sm:text-2xl">
+            <div className="mt-4 text-center">
+              <h2 className="text-lg font-semibold text-white sm:text-xl">
                 Review before you route treasury.
               </h2>
-              <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-400">
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-400">
                 The shield represents proposal quality, evidence checks, and governance risk signals.
               </p>
             </div>
           </div>
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-4 space-y-2">
             {networkStats.map((stat) => (
-              <div key={stat.label} className="ai-card rounded-xl p-4">
+              <div key={stat.label} className="ai-card rounded-xl p-3">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-sm text-slate-400">{stat.label}</span>
-                  <span className="text-xl font-semibold text-white">{stat.value}</span>
+                  <span className="text-lg font-semibold text-white">{stat.value}</span>
                 </div>
-                <div className="mt-3 h-2 rounded-full bg-white/10">
+                <div className="mt-2 h-1.5 rounded-full bg-white/10">
                   <div
-                    className="h-2 rounded-full bg-gradient-to-r from-cyan-300 via-fuchsia-400 to-emerald-300"
+                    className="h-1.5 rounded-full bg-gradient-to-r from-cyan-300 via-fuchsia-400 to-emerald-300"
                     style={{ width: stat.level }}
                   />
                 </div>
