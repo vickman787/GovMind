@@ -32,9 +32,14 @@ export function AppLayout({
           <button
             type="button"
             onClick={() => handleNavigate('home')}
-            className="order-1 shrink-0 text-left text-lg font-semibold text-white"
+            className="order-1 flex shrink-0 items-center gap-2 text-left text-lg font-semibold text-white"
           >
-            GovMind
+            <img
+              src="/favicon.svg"
+              alt=""
+              className="h-8 w-8 rounded-xl border border-cyan-300/20 bg-slate-950/70 p-1"
+            />
+            <span>GovMind</span>
           </button>
 
           <nav
