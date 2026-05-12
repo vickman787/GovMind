@@ -15,7 +15,7 @@ export function Home({ onNavigate }) {
 
   return (
     <div className="flex flex-col gap-5 sm:gap-8">
-      <section className="grid gap-6 lg:grid-cols-[1fr_0.82fr] lg:items-stretch">
+      <section className="grid gap-6 lg:grid-cols-[1fr_0.82fr] lg:items-start">
         <div className="ai-panel rounded-2xl p-5 sm:p-7 md:p-10">
           <p className="ai-kicker">DAO shield intelligence</p>
           <div className="space-y-5">
@@ -27,7 +27,7 @@ export function Home({ onNavigate }) {
               and contributor reputation before capital moves onchain.
             </p>
           </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+          <div className="mt-7 grid gap-3 sm:grid-cols-3">
             {['Evidence scan', 'Risk shield', 'Reputation signal'].map((label) => (
               <div key={label} className="ai-card rounded-xl px-4 py-3">
                 <p className="text-xs font-semibold uppercase text-emerald-300">{label}</p>
@@ -35,7 +35,7 @@ export function Home({ onNavigate }) {
               </div>
             ))}
           </div>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-wrap gap-3 sm:mt-6">
             <button
               type="button"
               onClick={() => onNavigate('submit')}
