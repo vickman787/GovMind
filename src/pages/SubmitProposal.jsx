@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { genlayerConfig } from '../config/genlayerConfig'
+
 import { analyzeProposal, submitProposal } from '../services/genlayerService'
 
 const inputStyle =
@@ -37,7 +37,7 @@ export function SubmitProposal({ walletAddress }) {
     setError('')
 
     try {
-      if (!genlayerConfig.mockMode && !walletAddress) {
+      if (!walletAddress) {
         throw new Error('Connect your wallet before sending a GenLayer transaction.')
       }
 
@@ -45,7 +45,7 @@ export function SubmitProposal({ walletAddress }) {
         title: formData.title,
         proposal_text: formData.description,
         evidence_url: formData.evidenceUrl,
-        creator: walletAddress || '0xMockCurrentUser',
+        creator: walletAddress,
         treasury_amount: formData.treasuryAmount,
         requested_funding: formData.requestedFunding,
       })
@@ -69,19 +69,15 @@ export function SubmitProposal({ walletAddress }) {
           Draft a governance action for AI review.
         </p>
         <p className="mt-4 text-sm leading-6 text-slate-300">
-          {genlayerConfig.mockMode
-            ? 'Mock mode is on, so submissions stay inside the frontend demo.'
-            : 'Real mode is on, so submissions are sent through your connected wallet.'}
+          Submissions are sent through your connected wallet.
         </p>
 
         <div className="ai-card mt-6 rounded-xl p-4">
           <p className="text-sm font-semibold text-cyan-200">
-            {genlayerConfig.mockMode ? 'Mock AI analyzer' : 'GenLayer AI analyzer'}
+            GenLayer AI analyzer
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            {genlayerConfig.mockMode
-              ? 'Fill the form and submit to generate a local-only governance risk review.'
-              : 'Fill the form and submit to store the proposal, then request GenLayer analysis.'}
+            Fill the form and submit to store the proposal, then request GenLayer analysis.
           </p>
         </div>
 
@@ -164,11 +160,7 @@ export function SubmitProposal({ walletAddress }) {
                 disabled={isSubmitting}
                 className="ai-primary-button w-full rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
               >
-                {isSubmitting
-                  ? 'Analyzing...'
-                  : genlayerConfig.mockMode
-                    ? 'Generate Analysis'
-                    : 'Submit to GenLayer'}
+                {isSubmitting ? 'Analyzing...' : 'Submit to GenLayer'}
               </button>
               <button
                 type="button"

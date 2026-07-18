@@ -117,7 +117,7 @@ export function Home({ onNavigate }) {
         <article className="ai-panel rounded-2xl p-5">
           <h2 className="mb-3 text-base font-semibold text-white">Reputation Layer</h2>
           <p className="text-sm leading-6 text-slate-400">
-            Surface mock leaders by voting weight, proposal quality, and review streak.
+            Surface top leaders by voting weight, proposal quality, and review streak.
           </p>
         </article>
       </section>

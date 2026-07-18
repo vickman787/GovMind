@@ -1,8 +1,6 @@
 # GovMind
 
-GovMind is a dark, futuristic DAO governance demo that shows how proposals can be submitted, analyzed, reviewed, and ranked before connecting to a real GenLayer deployment.
-
-The current app runs in mock mode by default. It does not require a wallet, backend, deployed contract, or real GenLayer RPC connection to try the demo.
+GovMind is a dark, futuristic DAO governance demo that shows how proposals can be submitted, analyzed, reviewed, and ranked using a real GenLayer deployment.
 
 ## Problem It Solves
 
@@ -21,7 +19,6 @@ GenLayer is designed for intelligent contracts that can use AI and web data as p
 - Proposals can include an evidence URL.
 - The contract layer is prepared to fetch evidence with `gl.nondet.web.get()`.
 - The contract layer is prepared to analyze proposal quality with `gl.nondet.exec_prompt()`.
-- The frontend is already separated through a service layer so mock data can later be replaced with real GenLayer contract calls.
 
 ## Main Features
 
@@ -42,7 +39,6 @@ GenLayer is designed for intelligent contracts that can use AI and web data as p
 - TailwindCSS
 - JavaScript
 - Python intelligent contract draft
-- Mock GenLayer service layer
 
 ## Folder Structure
 
@@ -92,22 +88,7 @@ Then open the URL shown in your terminal. It is usually:
 http://127.0.0.1:5173
 ```
 
-## Mock vs Live Mode
-
-GovMind uses mock mode by default so the app works immediately without deploying a contract.
-
-Mock mode is automatically enabled if no contract address is provided.
-When mock mode is on:
-
-- Proposal submissions are stored in temporary frontend JavaScript memory.
-- AI analysis returns instantly from mock data (bypassing the real contract).
-- No real GenLayer network calls are made.
-- No backend is required.
-
-When you are ready to use Live Mode:
-1. Deploy `GovMindContract.py` to GenLayer.
-2. Add the deployed contract address to `.env`.
-3. The app will automatically switch to Live Mode, routing all reads and writes to the real contract.
+## Contract Deployment
 
 The service file is:
 
@@ -120,15 +101,8 @@ src/services/genlayerService.js
 Create a local `.env` file from `.env.example` when you are ready to configure environment values:
 
 ```env
-VITE_MOCK_MODE=true
 VITE_GENLAYER_CONTRACT_ADDRESS=
 VITE_GENLAYER_RPC_URL=
-```
-
-For now, keep:
-
-```env
-VITE_MOCK_MODE=true
 ```
 
 Later, the real deployed GenLayer contract address will go here:
@@ -149,13 +123,11 @@ VITE_GENLAYER_RPC_URL=your_rpc_url_here
 2. Go to `Submit Proposal`.
 3. Fill in the proposal form.
 4. Submit the proposal.
-5. The app calls the service layer:
-   - In Mock Mode: returns instantly with canned data.
-   - In Live Mode: Prompts your wallet to send a real transaction to the GenLayer network.
+5. The app calls the service layer which prompts your wallet to send a real transaction to the GenLayer network.
 6. The AI analysis result appears on the page.
-8. Go to `Dashboard` to see proposals from the service layer.
-9. Go to `Proposal Details` to inspect a proposal.
-10. Go to `Leaderboard` to see mock reputation data.
+7. Go to `Dashboard` to see proposals from the service layer.
+8. Go to `Proposal Details` to inspect a proposal.
+9. Go to `Leaderboard` to see user reputation data.
 
 ## Available Scripts
 
@@ -185,25 +157,16 @@ Serves the production build locally.
 
 ## Future GenLayer Deployment Steps
 
-These steps are not implemented yet, but the project is prepared for them:
+These steps outline how to deploy the contract:
 
 1. Review and test `contracts/GovMindContract.py` in a GenLayer-compatible environment.
 2. Deploy `GovMindContract` to a GenLayer network.
 3. Add the deployed contract address to `.env`.
 4. Add the GenLayer RPC URL to `.env`.
-5. Set mock mode off:
-
-```env
-VITE_MOCK_MODE=false
-```
-
-6. Replace the placeholder sections in `src/services/genlayerService.js` with real `genlayer-js` calls.
-7. Add real wallet connection.
-8. Test proposal submission, analysis, proposal reads, and reputation reads against the deployed contract.
+5. Test proposal submission, analysis, proposal reads, and reputation reads against the deployed contract.
 
 ## Current Status
 
-GovMind includes both a frontend demo and a fully functional GenLayer integration:
+GovMind is a fully functional GenLayer integration:
 - Real browser wallet connection (`window.ethereum`)
 - Intelligent GenLayer contract (`GovMindContract.py`) with Web Fetch and LLM prompt integration
-- Automatic fallback to mock data when no contract is deployed

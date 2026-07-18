@@ -1,154 +1,7 @@
 import { genlayerConfig } from '../config/genlayerConfig'
 
-const MOCK_MODE = genlayerConfig.mockMode
-let genlayerReadClient = null
-let genlayerWriteClient = null
-let genlayerWriteAccount = null
-let genlayerWriteProvider = null
-
-const mockAnalysis = {
-  recommendation: 'NEEDS_REVISION',
-  confidence: 82,
-  risk_score: 38,
-  treasury_impact: 'MEDIUM',
-  governance_attack_risk: 'LOW',
-  summary:
-    'The proposal has a clear public-goods goal, but it needs stronger milestones and budget controls before approval.',
-  benefits: [
-    'Improves DAO visibility into civic research outcomes.',
-    'Creates reusable public dashboards for future proposal reviews.',
-    'Includes an evidence URL that voters can inspect.',
-  ],
-  risks: [
-    'Budget scope may expand without milestone-based releases.',
-    'Success metrics are still broad.',
-  ],
-  missing_details: [
-    'Named delivery owner',
-    'Milestone dates',
-    'Refund process for unused funds',
-  ],
-  suggested_improvements: [
-    'Split funding into milestone-based tranches.',
-    'Add measurable success criteria.',
-    'Attach a detailed budget sheet.',
-  ],
-  evidence_used: ['https://forum.govmind.example/public-records-research'],
-}
-
-let mockProposals = [
-  {
-    id: 1,
-    title: 'Fund public records research',
-    proposal_text:
-      'Create a six month research program that maps public records workflows and publishes monthly reports for DAO voters.',
-    evidence_url: 'https://forum.govmind.example/public-records-research',
-    creator: '0xMockCreator001',
-    status: 'ANALYZED',
-    analysis: mockAnalysis,
-    timestamp: 1778495280000,
-  },
-  {
-    id: 2,
-    title: 'Upgrade delegate review cadence',
-    proposal_text:
-      'Move delegate reviews to a monthly rhythm with public scorecards, transparent notes, and clear accountability signals for voters.',
-    evidence_url: 'https://forum.govmind.example/delegate-review-cadence',
-    creator: '0xMockDelegate002',
-    status: 'REVIEW',
-    analysis: {
-      ...mockAnalysis,
-      recommendation: 'APPROVE',
-      confidence: 88,
-      risk_score: 24,
-      treasury_impact: 'LOW',
-      summary:
-        'The review cadence is low risk and improves delegate accountability with a clear operational process.',
-    },
-    timestamp: 1778498880000,
-  },
-  {
-    id: 3,
-    title: 'Fund onchain policy simulations',
-    proposal_text:
-      'Prototype simulations for grant scoring, treasury allocation, and dispute resolution so voters can compare likely outcomes before governance votes.',
-    evidence_url: 'https://forum.govmind.example/policy-simulations',
-    creator: '0xMockSignal003',
-    status: 'QUEUED',
-    analysis: null,
-    timestamp: 1778502480000,
-  },
-]
-
-const mockReputation = {
-  '0xMockCreator001': 12,
-  '0xMockDelegate002': 27,
-  '0xMockSignal003': 18,
-  '0xMockMira004': 9,
-  '0xMockOrbit005': 15,
-}
-
-const fallbackProposal = mockProposals[0]
-const mockLeaderboard = [
-  {
-    rank: 1,
-    name: 'Nova Council',
-    address: '0xMockCreator001',
-    role: 'Delegate',
-    score: mockReputation['0xMockCreator001'],
-    streak: '21 votes',
-  },
-  {
-    rank: 2,
-    name: 'Astra Labs',
-    address: '0xMockDelegate002',
-    role: 'Research Cell',
-    score: mockReputation['0xMockDelegate002'],
-    streak: '14 reviews',
-  },
-  {
-    rank: 3,
-    name: 'Signal Guild',
-    address: '0xMockSignal003',
-    role: 'Operations',
-    score: mockReputation['0xMockSignal003'],
-    streak: '18 votes',
-  },
-  {
-    rank: 4,
-    name: 'Mira Chen',
-    address: '0xMockMira004',
-    role: 'Treasury Analyst',
-    score: mockReputation['0xMockMira004'],
-    streak: '9 reviews',
-  },
-  {
-    rank: 5,
-    name: 'Orbit Forum',
-    address: '0xMockOrbit005',
-    role: 'Community',
-    score: mockReputation['0xMockOrbit005'],
-    streak: '12 votes',
-  },
-]
 
 export async function submitProposal(proposalData) {
-  if (MOCK_MODE) {
-    const proposal = {
-      id: mockProposals.length + 1,
-      title: proposalData.title,
-      proposal_text: proposalData.proposal_text,
-      evidence_url: proposalData.evidence_url,
-      creator: proposalData.creator ?? '0xMockCurrentUser',
-      status: 'SUBMITTED',
-      analysis: null,
-      timestamp: Date.now(),
-    }
-
-    mockProposals = [...mockProposals, proposal]
-    return proposal
-  }
-
   const client = await getGenLayerWriteClient(proposalData.creator)
   const transactionHash = await client.writeContract({
     address: getContractAddress(),
@@ -174,26 +27,6 @@ export async function submitProposal(proposalData) {
 }
 
 export async function analyzeProposal(proposalId, walletAddress) {
-  if (MOCK_MODE) {
-    const proposal = mockProposals.find((item) => item.id === Number(proposalId))
-
-    if (!proposal) {
-      return { error: 'PROPOSAL_NOT_FOUND' }
-    }
-
-    const updatedProposal = {
-      ...proposal,
-      status: 'ANALYZED',
-      analysis: mockAnalysis,
-    }
-
-    mockProposals = mockProposals.map((item) =>
-      item.id === updatedProposal.id ? updatedProposal : item,
-    )
-
-    return mockAnalysis
-  }
-
   const client = await getGenLayerWriteClient(walletAddress)
   const transactionHash = await client.writeContract({
     address: getContractAddress(),
@@ -209,28 +42,18 @@ export async function analyzeProposal(proposalId, walletAddress) {
 }
 
 export async function getProposal(proposalId) {
-  if (MOCK_MODE) {
-    const normalizedId = Number(proposalId)
-    const proposal = mockProposals.find((item) => item.id === normalizedId)
-    return proposal ?? fallbackProposal
-  }
-
   const result = await readContract('get_proposal', [String(proposalId ?? '0')])
   const proposal = parseContractJson(result)
 
   if (proposal?.error) {
     const proposals = await getAllProposals()
-    return proposals[0] ?? fallbackProposal
+    return proposals[0] ?? null
   }
 
   return normalizeProposal(proposal)
 }
 
 export async function getAllProposals() {
-  if (MOCK_MODE) {
-    return [...mockProposals]
-  }
-
   const result = await readContract('get_all_proposals', [])
   const proposals = parseContractJson(result)
 
@@ -242,13 +65,6 @@ export async function getAllProposals() {
 }
 
 export async function getUserReputation(address) {
-  if (MOCK_MODE) {
-    return {
-      address,
-      reputation: mockReputation[address] ?? 0,
-    }
-  }
-
   const result = await readContract('get_user_reputation', [address])
   const reputation = parseContractJson(result)
 
@@ -259,10 +75,6 @@ export async function getUserReputation(address) {
 }
 
 export async function getLeaderboard() {
-  if (MOCK_MODE) {
-    return mockLeaderboard
-  }
-
   const result = await readContract('get_leaderboard', [])
   const users = parseContractJson(result)
 
