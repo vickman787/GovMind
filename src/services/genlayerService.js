@@ -1,5 +1,9 @@
 import { genlayerConfig } from '../config/genlayerConfig'
 
+let genlayerReadClient = null
+let genlayerWriteClient = null
+let genlayerWriteAccount = null
+let genlayerWriteProvider = null
 
 export async function submitProposal(proposalData) {
   const client = await getGenLayerWriteClient(proposalData.creator)
