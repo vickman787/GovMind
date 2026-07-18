@@ -25,7 +25,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
     return (
       <section className="ai-panel rounded-2xl p-5 sm:p-7">
         <h1 className="text-3xl font-semibold text-white md:text-4xl">Proposal Details</h1>
-        <p className="mt-4 text-sm text-slate-300">Loading mock proposal details...</p>
+        <p className="mt-4 text-sm text-slate-300">Loading proposal details...</p>
       </section>
     )
   }

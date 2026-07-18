@@ -59,17 +59,16 @@ class GovMindContract(gl.Contract):
         proposal_text = proposal["proposal_text"]
         evidence_url = proposal["evidence_url"]
 
-        # Web fetching is intentionally skipped for this Studio-safe version.
-        # When the basic contract is stable, gl.nondet.web.get(evidence_url)
-        # can be added back inside leader_fn below.
-        if evidence_url == "":
-            evidence_note = "No evidence URL was provided."
-            evidence_used = []
-        else:
-            evidence_note = f"Evidence URL provided but not fetched in this safe Studio test: {evidence_url}"
-            evidence_used = [evidence_url]
-
         def leader_fn():
+            if evidence_url == "":
+                evidence_note = "No evidence URL was provided."
+            else:
+                try:
+                    web_content = gl.nondet.web.get(evidence_url)
+                    evidence_note = f"Content from {evidence_url}:\n{web_content}"
+                except Exception as e:
+                    evidence_note = f"Failed to fetch {evidence_url}: {e}"
+
             prompt = f"""
 You are analyzing a DAO governance proposal for GovMind.
 
@@ -117,7 +116,6 @@ Evidence note:
 
         raw_analysis = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
         analysis = self._normalize_analysis(raw_analysis)
-        analysis["evidence_used"] = evidence_used
 
         proposal["ai_analysis"] = analysis
         self.proposals[proposal_id] = self._json(proposal)
