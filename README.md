@@ -56,8 +56,6 @@ govmind/
       AppLayout.jsx
     config/
       genlayerConfig.js
-    data/
-      mockData.js
     pages/
       Dashboard.jsx
       Home.jsx
