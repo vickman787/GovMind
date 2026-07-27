@@ -161,7 +161,14 @@ Proposal text:
 Evidence note:
 {evidence_note}
 """
-            llm_result = gl.nondet.exec_prompt(prompt, response_format="json")
+            # exec_prompt(response_format="json") returns the LLM's JSON
+            # output as a raw string, not a parsed object, so it must be
+            # parsed here before validator_fn can inspect it as a dict.
+            llm_raw = gl.nondet.exec_prompt(prompt, response_format="json")
+            try:
+                llm_result = json.loads(llm_raw) if isinstance(llm_raw, str) else llm_raw
+            except (TypeError, ValueError):
+                llm_result = {}
 
             # Bundle the fetched evidence alongside the LLM output so it can
             # be permanently snapshotted on-chain once, instead of only
