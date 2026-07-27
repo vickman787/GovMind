@@ -29,6 +29,7 @@ function App() {
         proposalId={activeProposalId}
         onNavigate={navigate}
         onSelectProposal={setActiveProposalId}
+        walletAddress={walletAddress}
       />
     ),
     leaderboard: <Leaderboard />,

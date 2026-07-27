@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { getAllProposals, getProposal } from '../services/genlayerService'
+import { analyzeProposal, getAllProposals, getProposal } from '../services/genlayerService'
 
-export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
+export function ProposalDetails({ proposalId, onNavigate, onSelectProposal, walletAddress }) {
   const [proposal, setProposal] = useState(null)
   const [proposals, setProposals] = useState([])
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysisError, setAnalysisError] = useState('')
 
   useEffect(() => {
     async function loadProposalDetails() {
@@ -16,10 +18,30 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
 
       setProposal(serviceProposal.error ? fallbackProposal : serviceProposal)
       setProposals(serviceProposals)
+      setAnalysisError('')
     }
 
     loadProposalDetails()
   }, [proposalId])
+
+  const handleRunAnalysis = async () => {
+    setIsAnalyzing(true)
+    setAnalysisError('')
+
+    try {
+      if (!walletAddress) {
+        throw new Error('Connect your wallet before requesting analysis.')
+      }
+
+      await analyzeProposal(proposal.id, walletAddress)
+      const refreshedProposal = await getProposal(proposal.id)
+      setProposal(refreshedProposal.error ? proposal : refreshedProposal)
+    } catch (error) {
+      setAnalysisError(error.message)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
 
   if (!proposal) {
     return (
@@ -61,6 +83,28 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal }) {
           <Metric label="Confidence" value={`${proposal.analysis?.confidence ?? 0}%`} />
           <Metric label="Risk score" value={`${proposal.analysis?.risk_score ?? 0}%`} />
         </div>
+
+        {!proposal.analysis && (
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRunAnalysis}
+              disabled={isAnalyzing}
+              className="ai-primary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isAnalyzing ? 'Analyzing (this can take a couple of minutes)...' : 'Run GenLayer analysis'}
+            </button>
+            {!walletAddress && (
+              <p className="text-sm text-slate-400">Connect your wallet to request analysis.</p>
+            )}
+          </div>
+        )}
+
+        {analysisError && (
+          <p className="mt-4 rounded-xl border border-rose-300/30 bg-rose-300/10 px-4 py-3 text-sm text-rose-200">
+            {analysisError}
+          </p>
+        )}
       </section>
 
       <aside className="ai-panel rounded-2xl p-5">
