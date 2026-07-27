@@ -20,6 +20,37 @@ const recommendationStyles = {
   INSUFFICIENT_CONTEXT: 'border-amber-300/40 bg-amber-300/10 text-amber-200',
 }
 
+// Mirrors the bounds enforced on-chain in GovMindContract.submit_proposal so
+// obviously invalid submissions fail fast in the UI instead of wasting a
+// wallet transaction on a revert.
+const MAX_TITLE_LENGTH = 200
+const MIN_PROPOSAL_TEXT_LENGTH = 20
+const MAX_PROPOSAL_TEXT_LENGTH = 6000
+const MAX_EVIDENCE_URL_LENGTH = 500
+
+function validateProposalInput({ title, description, evidenceUrl }) {
+  const trimmedTitle = title.trim()
+  const trimmedDescription = description.trim()
+  const trimmedEvidenceUrl = evidenceUrl.trim()
+
+  if (!trimmedTitle || trimmedTitle.length > MAX_TITLE_LENGTH) {
+    return `Title must be 1-${MAX_TITLE_LENGTH} characters.`
+  }
+
+  if (
+    trimmedDescription.length < MIN_PROPOSAL_TEXT_LENGTH ||
+    trimmedDescription.length > MAX_PROPOSAL_TEXT_LENGTH
+  ) {
+    return `Proposal description must be ${MIN_PROPOSAL_TEXT_LENGTH}-${MAX_PROPOSAL_TEXT_LENGTH} characters.`
+  }
+
+  if (trimmedEvidenceUrl.length > MAX_EVIDENCE_URL_LENGTH) {
+    return `Evidence URL must be at most ${MAX_EVIDENCE_URL_LENGTH} characters.`
+  }
+
+  return ''
+}
+
 export function SubmitProposal({ walletAddress }) {
   const [formData, setFormData] = useState(initialForm)
   const [analysis, setAnalysis] = useState(null)
@@ -39,6 +70,11 @@ export function SubmitProposal({ walletAddress }) {
     try {
       if (!walletAddress) {
         throw new Error('Connect your wallet before sending a GenLayer transaction.')
+      }
+
+      const validationError = validateProposalInput(formData)
+      if (validationError) {
+        throw new Error(validationError)
       }
 
       const proposal = await submitProposal({

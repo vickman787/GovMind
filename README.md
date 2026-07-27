@@ -17,8 +17,15 @@ DAO voters often need to review proposals that are long, unclear, risky, or miss
 GenLayer is designed for intelligent contracts that can use AI and web data as part of contract logic. GovMind is structured around that idea:
 
 - Proposals can include an evidence URL.
-- The contract layer is prepared to fetch evidence with `gl.nondet.web.get()`.
-- The contract layer is prepared to analyze proposal quality with `gl.nondet.exec_prompt()`.
+- The contract layer fetches evidence with `gl.nondet.web.get()`.
+- The contract layer analyzes proposal quality with `gl.nondet.exec_prompt()`.
+- Each proposal can be analyzed exactly once. The fetched evidence and the AI analysis are both locked in on-chain the first time `analyze_proposal` succeeds, so neither can be overwritten or re-rolled later.
+- Reputation is only granted when a proposal completes analysis with a real recommendation (not `INSUFFICIENT_CONTEXT`), not simply for submitting a proposal.
+- `submit_proposal` rejects titles, descriptions, and evidence URLs outside fixed length bounds, and the analysis validator rejects leader responses whose text fields or lists exceed fixed size bounds.
+
+### Known limitation: validators check structure and bounds, not truth
+
+The consensus validator (`_analysis_has_valid_shape` in `contracts/GovMindContract.py`) confirms the leader's AI response has the right fields, allowed values, and size limits. It does not independently re-derive or fact-check the recommendation itself — doing that correctly would require comparing multiple independent LLM runs (a comparative equivalence check) rather than validating one leader's self-reported output. Treat `analyze_proposal` output as an AI-assisted signal for human DAO voters, not as ground truth.
 
 ## Main Features
 
