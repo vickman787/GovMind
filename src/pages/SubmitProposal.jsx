@@ -115,6 +115,10 @@ export function SubmitProposal({ walletAddress }) {
           <p className="mt-2 text-sm leading-6 text-slate-300">
             Fill the form and submit to store the proposal, then request GenLayer analysis.
           </p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Analysis fetches your evidence URL and runs an LLM prompt across validators, so it
+            can take a couple of minutes to reach consensus. Keep this page open.
+          </p>
         </div>
 
         <div className="ai-card mt-4 rounded-xl p-4">

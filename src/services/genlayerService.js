@@ -14,7 +14,13 @@ export async function submitProposal(proposalData) {
     value: BigInt(0),
   })
 
-  await waitForAcceptedTransaction(client, transactionHash)
+  // submit_proposal is deterministic (no LLM/web call), but Studio still
+  // needs a full validator consensus round, so give it more than the
+  // library's ~30s default before giving up.
+  await waitForAcceptedTransaction(client, transactionHash, {
+    interval: 3000,
+    retries: 20,
+  })
 
   const proposals = await getAllProposals()
   return proposals[proposals.length - 1] ?? {
@@ -39,7 +45,13 @@ export async function analyzeProposal(proposalId, walletAddress) {
     value: BigInt(0),
   })
 
-  await waitForAcceptedTransaction(client, transactionHash)
+  // analyze_proposal fetches the evidence URL and runs an LLM prompt on the
+  // leader, then needs the other validators to independently agree, which
+  // routinely takes well over the library's ~30s default wait.
+  await waitForAcceptedTransaction(client, transactionHash, {
+    interval: 4000,
+    retries: 45,
+  })
 
   const proposal = await getProposal(proposalId)
   return normalizeAnalysis(proposal.ai_analysis ?? proposal.analysis)
@@ -319,16 +331,24 @@ function getConfiguredNetworkName() {
   return 'studionet'
 }
 
-async function waitForAcceptedTransaction(client, transactionHash) {
+async function waitForAcceptedTransaction(client, transactionHash, { interval, retries } = {}) {
   try {
     const { TransactionStatus } = await import('genlayer-js/types')
     await client.waitForTransactionReceipt({
       hash: transactionHash,
       status: TransactionStatus.ACCEPTED,
+      ...(interval ? { interval } : {}),
+      ...(retries ? { retries } : {}),
     })
-  } catch {
+  } catch (error) {
+    if (error?.message?.includes('Timed out waiting for transaction')) {
+      throw error
+    }
+
     await client.waitForTransactionReceipt({
       hash: transactionHash,
+      ...(interval ? { interval } : {}),
+      ...(retries ? { retries } : {}),
     })
   }
 }
