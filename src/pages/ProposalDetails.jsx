@@ -4,21 +4,27 @@ import { analyzeProposal, getAllProposals, getProposal } from '../services/genla
 export function ProposalDetails({ proposalId, onNavigate, onSelectProposal, walletAddress }) {
   const [proposal, setProposal] = useState(null)
   const [proposals, setProposals] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisError, setAnalysisError] = useState('')
 
   useEffect(() => {
     async function loadProposalDetails() {
+      setIsLoading(true)
+
       const [serviceProposal, serviceProposals] = await Promise.all([
         getProposal(proposalId),
         getAllProposals(),
       ])
 
-      const fallbackProposal = serviceProposals[0] ?? null
-
-      setProposal(serviceProposal.error ? fallbackProposal : serviceProposal)
+      // serviceProposal is null when proposalId doesn't exist on-chain.
+      // That must render as "not found", not silently swapped for some
+      // other real proposal - otherwise an invalid or missing ID would
+      // appear to display a legitimate but unrelated proposal.
+      setProposal(serviceProposal)
       setProposals(serviceProposals)
       setAnalysisError('')
+      setIsLoading(false)
     }
 
     loadProposalDetails()
@@ -35,7 +41,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal, wall
 
       await analyzeProposal(proposal.id, walletAddress)
       const refreshedProposal = await getProposal(proposal.id)
-      setProposal(refreshedProposal.error ? proposal : refreshedProposal)
+      setProposal(refreshedProposal ?? proposal)
     } catch (error) {
       setAnalysisError(error.message)
     } finally {
@@ -43,12 +49,62 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal, wall
     }
   }
 
-  if (!proposal) {
+  const switcher = (
+    <aside className="ai-panel rounded-2xl p-5">
+      <h2 className="text-lg font-semibold text-white">Proposal Switcher</h2>
+      <div className="mt-4 grid gap-3">
+        {proposals.length === 0 && (
+          <p className="text-sm text-slate-400">No proposals yet.</p>
+        )}
+        {proposals.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => {
+              onSelectProposal(item.id)
+              onNavigate('details', item.id)
+            }}
+            className={`rounded-xl border p-3 text-left text-sm transition ${
+              item.id === proposal?.id
+                ? 'border-cyan-300/60 bg-cyan-300/10 text-cyan-100'
+                : 'border-white/10 bg-black/20 text-slate-300 hover:border-cyan-300/50'
+            }`}
+          >
+            <span className="block text-xs text-slate-400">Proposal #{item.id}</span>
+            {item.title}
+          </button>
+        ))}
+      </div>
+    </aside>
+  )
+
+  if (isLoading) {
     return (
       <section className="ai-panel rounded-2xl p-5 sm:p-7">
         <h1 className="text-3xl font-semibold text-white md:text-4xl">Proposal Details</h1>
         <p className="mt-4 text-sm text-slate-300">Loading proposal details...</p>
       </section>
+    )
+  }
+
+  if (!proposal) {
+    return (
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <section className="ai-panel rounded-2xl p-5 sm:p-7">
+          <h1 className="text-3xl font-semibold text-white md:text-4xl">Proposal Details</h1>
+          <p className="mt-4 text-sm text-slate-300">
+            Proposal #{proposalId} was not found. It may not exist yet, or the ID may be wrong.
+          </p>
+          <button
+            type="button"
+            onClick={() => onNavigate('dashboard')}
+            className="ai-secondary-button mt-4 rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-cyan-300/20"
+          >
+            Go to Dashboard
+          </button>
+        </section>
+        {switcher}
+      </div>
     )
   }
 
@@ -107,29 +163,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal, wall
         )}
       </section>
 
-      <aside className="ai-panel rounded-2xl p-5">
-        <h2 className="text-lg font-semibold text-white">Proposal Switcher</h2>
-        <div className="mt-4 grid gap-3">
-          {proposals.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                onSelectProposal(item.id)
-                onNavigate('details', item.id)
-              }}
-              className={`rounded-xl border p-3 text-left text-sm transition ${
-                item.id === proposal.id
-                  ? 'border-cyan-300/60 bg-cyan-300/10 text-cyan-100'
-                  : 'border-white/10 bg-black/20 text-slate-300 hover:border-cyan-300/50'
-              }`}
-            >
-              <span className="block text-xs text-slate-400">Proposal #{item.id}</span>
-              {item.title}
-            </button>
-          ))}
-        </div>
-      </aside>
+      {switcher}
     </div>
   )
 }

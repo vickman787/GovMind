@@ -18,14 +18,14 @@ GenLayer is designed for intelligent contracts that can use AI and web data as p
 
 - Proposals can include an evidence URL.
 - The contract layer fetches evidence with `gl.nondet.web.get()`.
-- The contract layer analyzes proposal quality with `gl.nondet.exec_prompt()`.
-- Each proposal can be analyzed exactly once. The fetched evidence and the AI analysis are both locked in on-chain the first time `analyze_proposal` succeeds, so neither can be overwritten or re-rolled later.
-- Reputation is only granted when a proposal completes analysis with a real recommendation (not `INSUFFICIENT_CONTEXT`), not simply for submitting a proposal.
-- `submit_proposal` rejects titles, descriptions, and evidence URLs outside fixed length bounds, and the analysis validator rejects leader responses whose text fields or lists exceed fixed size bounds.
+- The contract layer analyzes proposal quality with `gl.eq_principle.prompt_non_comparative()`: every validator, not just the leader, independently fetches the evidence URL and runs its own LLM call, then judges its own result against an explicit criteria string (does the recommendation fit the actual proposal and evidence, is it specific rather than generic, etc). Consensus requires validators to agree the criteria is met, not just that a leader's output parses into the right JSON shape.
+- Each proposal can be analyzed exactly once. The AI analysis is locked in on-chain the first time `analyze_proposal` succeeds, so it can't be overwritten or re-rolled later.
+- Reputation is only granted once per proposal, and only for `APPROVE` or `NEEDS_REVISION` recommendations — outcomes that reflect the proposal had real merit or a fixable idea. `REJECT` and `INSUFFICIENT_CONTEXT` earn nothing, so reputation can't be inflated by submitting proposals that produce *some* analysis regardless of quality.
+- `submit_proposal` rejects titles, descriptions, and evidence URLs outside fixed length bounds, and stored analysis fields (summary, benefit/risk lists, etc) are clamped to fixed size limits after validators agree.
 
-### Known limitation: validators check structure and bounds, not truth
+### Known limitation
 
-The consensus validator (`_analysis_has_valid_shape` in `contracts/GovMindContract.py`) confirms the leader's AI response has the right fields, allowed values, and size limits. It does not independently re-derive or fact-check the recommendation itself — doing that correctly would require comparing multiple independent LLM runs (a comparative equivalence check) rather than validating one leader's self-reported output. Treat `analyze_proposal` output as an AI-assisted signal for human DAO voters, not as ground truth.
+Validators judge the recommendation against explicit criteria via their own independent LLM call, which is a real improvement over structural-only checking, but this is still an AI-assisted signal, not a formal proof of correctness — treat `analyze_proposal` output as input for human DAO voters, not as ground truth.
 
 ## Main Features
 

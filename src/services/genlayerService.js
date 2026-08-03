@@ -54,16 +54,19 @@ export async function analyzeProposal(proposalId, walletAddress) {
   })
 
   const proposal = await getProposal(proposalId)
-  return normalizeAnalysis(proposal.ai_analysis ?? proposal.analysis)
+  return normalizeAnalysis(proposal?.ai_analysis ?? proposal?.analysis)
 }
 
+// Returns null when proposalId doesn't exist. Callers must treat null as
+// "not found" - silently substituting a different real proposal here would
+// make an invalid or missing proposal ID appear to show a legitimate but
+// unrelated one.
 export async function getProposal(proposalId) {
   const result = await readContract('get_proposal', [String(proposalId ?? '0')])
   const proposal = parseContractJson(result)
 
   if (proposal?.error) {
-    const proposals = await getAllProposals()
-    return proposals[0] ?? null
+    return null
   }
 
   return normalizeProposal(proposal)

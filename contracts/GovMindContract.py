@@ -25,13 +25,11 @@ class GovMindContract(gl.Contract):
     MAX_PROPOSAL_TEXT_LENGTH = 6000
     MAX_EVIDENCE_URL_LENGTH = 500
 
-    # Bounds applied to the leader's returned analysis. This keeps the
-    # validator from accepting a well-formed but unbounded payload (a leader
-    # could otherwise stuff huge strings/arrays into an accepted response).
+    # Bounds applied to the agreed analysis text before it's stored, so one
+    # oversized field can't bloat contract storage.
     MAX_SUMMARY_LENGTH = 2000
     MAX_LIST_ITEMS = 12
     MAX_LIST_ITEM_LENGTH = 300
-    MAX_EVIDENCE_SNAPSHOT_LENGTH = 2000
 
     def __init__(self):
         self.proposal_count = u256(0)
@@ -72,7 +70,6 @@ class GovMindContract(gl.Contract):
             "title": title,
             "proposal_text": proposal_text,
             "evidence_url": evidence_url,
-            "evidence_snapshot": None,
             "creator": creator,
             "ai_analysis": None,
             "timestamp": "created_in_genlayer_studio",
@@ -114,7 +111,10 @@ class GovMindContract(gl.Contract):
         proposal_text = proposal["proposal_text"]
         evidence_url = proposal["evidence_url"]
 
-        def leader_fn():
+        def gather_context() -> str:
+            # Every validator (not just the leader) runs this function
+            # independently, so every validator fetches evidence_url itself
+            # rather than trusting the leader's claim about what it found.
             if evidence_url == "":
                 evidence_note = "No evidence URL was provided."
             else:
@@ -124,13 +124,23 @@ class GovMindContract(gl.Contract):
                 except Exception as e:
                     evidence_note = f"Failed to fetch {evidence_url}: {e}"
 
-            prompt = f"""
-You are analyzing a DAO governance proposal for GovMind.
+            return f"""
+Proposal title:
+{title}
 
-Return JSON only. Do not return markdown. Do not include extra text.
+Proposal text:
+{proposal_text}
+
+Evidence note:
+{evidence_note}
+"""
+
+        task = """
+Analyze the DAO governance proposal above for GovMind. Return JSON only.
+Do not return markdown. Do not include extra text.
 
 Required JSON shape:
-{{
+{
   "recommendation": "APPROVE | REJECT | NEEDS_REVISION | INSUFFICIENT_CONTEXT",
   "confidence": 0,
   "risk_score": 0,
@@ -142,7 +152,7 @@ Required JSON shape:
   "missing_details": [],
   "suggested_improvements": [],
   "evidence_used": []
-}}
+}
 
 Rules:
 - recommendation must be one of APPROVE, REJECT, NEEDS_REVISION, INSUFFICIENT_CONTEXT.
@@ -151,60 +161,45 @@ Rules:
 - treasury_impact must be LOW, MEDIUM, or HIGH.
 - governance_attack_risk must be LOW, MEDIUM, or HIGH.
 - Use INSUFFICIENT_CONTEXT if the proposal is too vague.
-
-Proposal title:
-{title}
-
-Proposal text:
-{proposal_text}
-
-Evidence note:
-{evidence_note}
 """
-            # exec_prompt(response_format="json") returns the LLM's JSON
-            # output as a raw string, not a parsed object, so it must be
-            # parsed here before validator_fn can inspect it as a dict.
-            llm_raw = gl.nondet.exec_prompt(prompt, response_format="json")
-            try:
-                llm_result = json.loads(llm_raw) if isinstance(llm_raw, str) else llm_raw
-            except (TypeError, ValueError):
-                llm_result = {}
 
-            # Bundle the fetched evidence alongside the LLM output so it can
-            # be permanently snapshotted on-chain once, instead of only
-            # trusting the LLM's self-reported "evidence_used" field.
-            return {
-                "analysis": llm_result,
-                "evidence_snapshot": evidence_note[: self.MAX_EVIDENCE_SNAPSHOT_LENGTH],
-            }
+        # This is the actual fix for "validators only check schema": instead
+        # of validators re-checking the leader's self-reported JSON shape,
+        # every validator independently re-runs gather_context (its own
+        # evidence fetch) and its own LLM call, then judges its own result
+        # against this criteria. Consensus requires validators to agree the
+        # criteria is met, not just that the leader's output parses.
+        criteria = """
+The response is valid JSON with exactly the fields required by the task, and no markdown or extra text.
+recommendation, confidence, risk_score, treasury_impact, and governance_attack_risk are consistent with the actual proposal text and evidence note given above, not generic or arbitrary values.
+The summary, benefits, risks, missing_details, and suggested_improvements meaningfully reference specific content from this proposal or its evidence, not boilerplate that could apply to any proposal.
+If the evidence note says no evidence was provided or fetching it failed, that limitation is reflected in missing_details or a lower confidence score rather than ignored.
+"""
 
-        def validator_fn(leader_result):
-            if not isinstance(leader_result, gl.vm.Return):
-                return False
+        raw_text = gl.eq_principle.prompt_non_comparative(
+            gather_context,
+            task=task,
+            criteria=criteria,
+        )
 
-            payload = leader_result.calldata
-            if not isinstance(payload, dict):
-                return False
+        try:
+            raw_analysis = json.loads(raw_text) if isinstance(raw_text, str) else raw_text
+        except (TypeError, ValueError):
+            raw_analysis = None
 
-            if not isinstance(payload.get("evidence_snapshot"), str):
-                return False
-
-            return self._analysis_has_valid_shape(payload.get("analysis"))
-
-        raw_payload = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
-        raw_analysis = raw_payload.get("analysis") if isinstance(raw_payload, dict) else None
         analysis = self._normalize_analysis(raw_analysis)
-        evidence_snapshot = (raw_payload or {}).get("evidence_snapshot", "")
-        proposal["evidence_snapshot"] = str(evidence_snapshot)[: self.MAX_EVIDENCE_SNAPSHOT_LENGTH]
 
         proposal["ai_analysis"] = analysis
         self.proposals[proposal_id] = self._json(proposal)
 
         # Reputation is only granted once, on the proposal's single analysis
-        # pass, and only when the AI judged there was enough substance to
-        # form a real recommendation. This ties reputation to a quality
-        # signal instead of raw submission/analysis volume.
-        if analysis["recommendation"] != "INSUFFICIENT_CONTEXT":
+        # pass, and only for outcomes that reflect real merit: APPROVE means
+        # the proposal is good as-is, NEEDS_REVISION means it has a genuine
+        # idea worth fixing. REJECT (the AI judged it harmful/unworkable) and
+        # INSUFFICIENT_CONTEXT (too vague to evaluate) earn nothing, so
+        # reputation can't be inflated by submitting proposals that simply
+        # produce *some* analysis regardless of how bad they are.
+        if analysis["recommendation"] in ("APPROVE", "NEEDS_REVISION"):
             creator = proposal["creator"]
             current_reputation = int(self.user_reputation.get(creator, "0"))
             self.user_reputation[creator] = str(current_reputation + 1)
@@ -257,55 +252,6 @@ Evidence note:
 
         return self._json(users)
 
-    def _analysis_has_valid_shape(self, analysis) -> bool:
-        """Validate the leader result without requiring exact LLM wording.
-
-        NOTE ON VALIDATION SCOPE: this checks structure, value ranges, and
-        size bounds (right fields, right types, capped string/list sizes).
-        It does not verify that the recommendation is factually correct,
-        since that would require validators to independently re-derive and
-        cross-check judgment (for example a comparative equivalence
-        principle across multiple LLM runs) rather than re-checking the
-        leader's declared shape. Treat analyze_proposal's output as an
-        AI-assisted signal for human DAO voters, not as ground truth.
-        """
-        if not isinstance(analysis, dict):
-            return False
-
-        if analysis.get("recommendation") not in [
-            "APPROVE",
-            "REJECT",
-            "NEEDS_REVISION",
-            "INSUFFICIENT_CONTEXT",
-        ]:
-            return False
-
-        if analysis.get("treasury_impact") not in ["LOW", "MEDIUM", "HIGH"]:
-            return False
-
-        if analysis.get("governance_attack_risk") not in ["LOW", "MEDIUM", "HIGH"]:
-            return False
-
-        if not self._is_score(analysis.get("confidence")) or not self._is_score(
-            analysis.get("risk_score")
-        ):
-            return False
-
-        if not self._is_bounded_str(analysis.get("summary"), self.MAX_SUMMARY_LENGTH):
-            return False
-
-        for field in (
-            "benefits",
-            "risks",
-            "missing_details",
-            "suggested_improvements",
-            "evidence_used",
-        ):
-            if not self._is_bounded_str_list(analysis.get(field)):
-                return False
-
-        return True
-
     def _normalize_analysis(self, analysis):
         """Ensure analyze_proposal always returns the same JSON fields."""
         if not isinstance(analysis, dict):
@@ -345,14 +291,6 @@ Evidence note:
 
         return fallback
 
-    def _is_score(self, value) -> bool:
-        try:
-            score = int(value)
-        except Exception:
-            return False
-
-        return 0 <= score <= 100
-
     def _bounded_score(self, value) -> int:
         try:
             score = int(value)
@@ -373,18 +311,6 @@ Evidence note:
         bounded = [str(item) for item in value if isinstance(item, str)]
         bounded = [item[: self.MAX_LIST_ITEM_LENGTH] for item in bounded]
         return bounded[: self.MAX_LIST_ITEMS]
-
-    def _is_bounded_str(self, value, max_length: int) -> bool:
-        return isinstance(value, str) and len(value) <= max_length
-
-    def _is_bounded_str_list(self, value) -> bool:
-        if not isinstance(value, list):
-            return False
-
-        if len(value) > self.MAX_LIST_ITEMS:
-            return False
-
-        return all(self._is_bounded_str(item, self.MAX_LIST_ITEM_LENGTH) for item in value)
 
     def _json(self, value) -> str:
         """Return structured JSON strings from all public methods."""

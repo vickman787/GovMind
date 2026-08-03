@@ -51,12 +51,19 @@ function validateProposalInput({ title, description, evidenceUrl }) {
   return ''
 }
 
-export function SubmitProposal({ walletAddress }) {
+export function SubmitProposal({ walletAddress, onNavigate, onSelectProposal }) {
   const [formData, setFormData] = useState(initialForm)
   const [analysis, setAnalysis] = useState(null)
   const [submittedProposal, setSubmittedProposal] = useState(null)
+  // Submission and analysis are two separate transactions with two separate
+  // outcomes. Tracking them as one combined loading/error pair meant a
+  // proposal that submitted fine but failed or timed out during analysis
+  // showed only an error, with no record that the submission itself
+  // succeeded - even though it's already stored on-chain.
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState('')
+  const [analysisError, setAnalysisError] = useState('')
 
   const updateField = (field, value) => {
     setFormData((current) => ({ ...current, [field]: value }))
@@ -64,20 +71,26 @@ export function SubmitProposal({ walletAddress }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setIsSubmitting(true)
     setError('')
+    setAnalysisError('')
+    setAnalysis(null)
+    setSubmittedProposal(null)
 
+    if (!walletAddress) {
+      setError('Connect your wallet before sending a GenLayer transaction.')
+      return
+    }
+
+    const validationError = validateProposalInput(formData)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    let proposal
+    setIsSubmitting(true)
     try {
-      if (!walletAddress) {
-        throw new Error('Connect your wallet before sending a GenLayer transaction.')
-      }
-
-      const validationError = validateProposalInput(formData)
-      if (validationError) {
-        throw new Error(validationError)
-      }
-
-      const proposal = await submitProposal({
+      proposal = await submitProposal({
         title: formData.title,
         proposal_text: formData.description,
         evidence_url: formData.evidenceUrl,
@@ -85,15 +98,32 @@ export function SubmitProposal({ walletAddress }) {
         treasury_amount: formData.treasuryAmount,
         requested_funding: formData.requestedFunding,
       })
-      const result = await analyzeProposal(proposal.id, walletAddress)
-
       setSubmittedProposal(proposal)
-      setAnalysis(result)
     } catch (serviceError) {
       setError(serviceError.message)
+      return
     } finally {
       setIsSubmitting(false)
     }
+
+    setIsAnalyzing(true)
+    try {
+      const result = await analyzeProposal(proposal.id, walletAddress)
+      setAnalysis(result)
+    } catch (serviceError) {
+      setAnalysisError(serviceError.message)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const viewSubmittedProposal = () => {
+    if (!submittedProposal) {
+      return
+    }
+
+    onSelectProposal?.(submittedProposal.id)
+    onNavigate?.('details', submittedProposal.id)
   }
 
   return (
@@ -132,9 +162,25 @@ export function SubmitProposal({ walletAddress }) {
           <div className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-4">
             <p className="text-sm font-semibold text-emerald-200">Submitted proposal</p>
             <p className="mt-2 break-words text-sm text-slate-300">
-              ID #{submittedProposal.id} is stored in the GovMind service
+              ID #{submittedProposal.id} is stored on-chain
               by {submittedProposal.creator}.
             </p>
+            {analysisError && (
+              <>
+                <p className="mt-3 text-sm text-amber-200">
+                  The submission itself succeeded, but requesting analysis failed:
+                  {' '}
+                  {analysisError}
+                </p>
+                <button
+                  type="button"
+                  onClick={viewSubmittedProposal}
+                  className="ai-secondary-button mt-3 rounded-full px-4 py-2 text-xs font-semibold transition hover:bg-cyan-300/20"
+                >
+                  Retry analysis on Proposal Details
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -197,10 +243,14 @@ export function SubmitProposal({ walletAddress }) {
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isAnalyzing}
                 className="ai-primary-button w-full rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
               >
-                {isSubmitting ? 'Analyzing...' : 'Submit to GenLayer'}
+                {isSubmitting
+                  ? 'Submitting...'
+                  : isAnalyzing
+                    ? 'Analyzing (this can take a couple of minutes)...'
+                    : 'Submit to GenLayer'}
               </button>
               <button
                 type="button"
@@ -209,6 +259,7 @@ export function SubmitProposal({ walletAddress }) {
                   setAnalysis(null)
                   setSubmittedProposal(null)
                   setError('')
+                  setAnalysisError('')
                 }}
                 className="ai-secondary-button w-full rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-cyan-300/20 sm:w-auto"
               >

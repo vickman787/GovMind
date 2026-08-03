@@ -22,7 +22,13 @@ function App() {
 
   const pages = {
     home: <Home onNavigate={navigate} />,
-    submit: <SubmitProposal walletAddress={walletAddress} />,
+    submit: (
+      <SubmitProposal
+        walletAddress={walletAddress}
+        onNavigate={navigate}
+        onSelectProposal={setActiveProposalId}
+      />
+    ),
     dashboard: <Dashboard onNavigate={navigate} />,
     details: (
       <ProposalDetails
