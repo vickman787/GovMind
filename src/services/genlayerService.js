@@ -108,7 +108,7 @@ export async function getLeaderboard() {
       address: user.address,
       role: 'GenLayer user',
       score: Number(user.reputation ?? 0),
-      streak: `${Number(user.reputation ?? 0)} submissions`,
+      streak: `${Number(user.reputation ?? 0)} approved or revisable proposals`,
     }))
     .sort((first, second) => second.score - first.score)
     .map((user, index) => ({
