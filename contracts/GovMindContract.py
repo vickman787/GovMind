@@ -208,7 +208,7 @@ These are categorical classifications, not continuous measurements, so there is 
             return f"""
 This proposal was independently classified by DAO validators as:
 recommendation={classification['recommendation']}
-risk_band={classification['risk_band']}
+risk_score={classification['risk_score']}
 treasury_impact={classification['treasury_impact']}
 governance_attack_risk={classification['governance_attack_risk']}
 
