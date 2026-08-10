@@ -14,12 +14,14 @@ export async function submitProposal(proposalData) {
     value: BigInt(0),
   })
 
-  // submit_proposal is deterministic (no LLM/web call), but Studio still
-  // needs a full validator consensus round, so give it more than the
-  // library's ~30s default before giving up.
-  await waitForAcceptedTransaction(client, transactionHash, {
-    interval: 3000,
-    retries: 20,
+  // ACCEPTED is provisional - GenLayer allows an appeal window before a
+  // transaction's result is final. Waiting only for ACCEPTED (as this used
+  // to) means the UI could show a result that later gets overturned, so we
+  // wait for FINALIZED instead, which takes longer but is the only state
+  // that's actually canonical.
+  await waitForFinalizedTransaction(client, transactionHash, {
+    interval: 4000,
+    retries: 40,
   })
 
   const proposals = await getAllProposals()
@@ -45,12 +47,13 @@ export async function analyzeProposal(proposalId, walletAddress) {
     value: BigInt(0),
   })
 
-  // analyze_proposal fetches the evidence URL and runs an LLM prompt on the
-  // leader, then needs the other validators to independently agree, which
-  // routinely takes well over the library's ~30s default wait.
-  await waitForAcceptedTransaction(client, transactionHash, {
-    interval: 4000,
-    retries: 45,
+  // analyze_proposal now runs three separate validator consensus rounds
+  // (evidence hash, independently-compared classification, narrative) and
+  // then has to clear the FINALIZED appeal window on top of that, so this
+  // needs a much larger budget than a single round did.
+  await waitForFinalizedTransaction(client, transactionHash, {
+    interval: 5000,
+    retries: 90,
   })
 
   const proposal = await getProposal(proposalId)
@@ -161,7 +164,12 @@ async function readContract(functionName, args) {
     address: getContractAddress(),
     functionName,
     args,
-    stateStatus: 'accepted',
+    // 'latest-final' (TransactionHashVariant.LATEST_FINAL) reads only
+    // finalized state, so displayed proposals/analyses/reputation never
+    // reflect a result that's still inside its appeal window and could
+    // still be overturned. The previous stateStatus: 'accepted' option had
+    // no effect - this client version's readContract doesn't recognize it.
+    transactionHashVariant: 'latest-final',
   })
 }
 
@@ -334,12 +342,12 @@ function getConfiguredNetworkName() {
   return 'studionet'
 }
 
-async function waitForAcceptedTransaction(client, transactionHash, { interval, retries } = {}) {
+async function waitForFinalizedTransaction(client, transactionHash, { interval, retries } = {}) {
   try {
     const { TransactionStatus } = await import('genlayer-js/types')
     await client.waitForTransactionReceipt({
       hash: transactionHash,
-      status: TransactionStatus.ACCEPTED,
+      status: TransactionStatus.FINALIZED,
       ...(interval ? { interval } : {}),
       ...(retries ? { retries } : {}),
     })

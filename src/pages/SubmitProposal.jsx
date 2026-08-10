@@ -146,8 +146,9 @@ export function SubmitProposal({ walletAddress, onNavigate, onSelectProposal }) 
             Fill the form and submit to store the proposal, then request GenLayer analysis.
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-400">
-            Analysis fetches your evidence URL and runs an LLM prompt across validators, so it
-            can take a couple of minutes to reach consensus. Keep this page open.
+            Analysis runs three separate validator consensus rounds (evidence hash, an
+            independently-compared classification, then supporting narrative), then waits for
+            finalization. This can take several minutes end to end - keep this page open.
           </p>
         </div>
 
@@ -249,7 +250,7 @@ export function SubmitProposal({ walletAddress, onNavigate, onSelectProposal }) 
                 {isSubmitting
                   ? 'Submitting...'
                   : isAnalyzing
-                    ? 'Analyzing (this can take a couple of minutes)...'
+                    ? 'Analyzing (this can take several minutes)...'
                     : 'Submit to GenLayer'}
               </button>
               <button

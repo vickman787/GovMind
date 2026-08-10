@@ -148,7 +148,7 @@ export function ProposalDetails({ proposalId, onNavigate, onSelectProposal, wall
               disabled={isAnalyzing}
               className="ai-primary-button rounded-full px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isAnalyzing ? 'Analyzing (this can take a couple of minutes)...' : 'Run GenLayer analysis'}
+              {isAnalyzing ? 'Analyzing (this can take several minutes)...' : 'Run GenLayer analysis'}
             </button>
             {!walletAddress && (
               <p className="text-sm text-slate-400">Connect your wallet to request analysis.</p>
